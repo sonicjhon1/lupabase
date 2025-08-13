@@ -64,7 +64,9 @@ pub trait Database: DatabaseOps + DatabaseIO {
     ///
     /// This method attempts to convert the relative directory returned by `dir()` into an absolute path.
     /// If obtaining an absolute path fails, it falls back to returning the original directory.
-    fn dir_absolute(&self) -> PathBuf { std::path::absolute(self.dir()).unwrap_or(self.dir()) }
+    fn dir_absolute(&self) -> PathBuf {
+        std::path::absolute(self.dir()).unwrap_or(self.dir())
+    }
     /// Constructs a full file path by joining the database's base directory with the provided file name.
     ///
     /// # Parameters
@@ -327,7 +329,9 @@ pub trait DatabaseTransaction: Database {
     ///
     /// * `Result<Self::TransactionDB>` - On success, a transactional database instance is returned.
     ///   If the transaction cannot be initiated, an error is returned.
-    fn transact(&self) -> Result<Self::TransactionDB> { return Ok(Self::TransactionDB::new("")); }
+    fn transact(&self) -> Result<Self::TransactionDB> {
+        return Ok(Self::TransactionDB::new(""));
+    }
     /// Commits the current transaction.
     ///
     /// This method attempts to persist all changes made within the transactional context by

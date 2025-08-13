@@ -46,18 +46,16 @@ impl DatabaseRecord for User {
     }
 }
 
-fn main() {
-    let users = vec![
-        User { id: 1, name: "Alice".into() },
-        User { id: 2, name: "Bob".into() },
-    ];
+let users = vec![
+    User { id: 1, name: "Alice".into() },
+    User { id: 2, name: "Bob".into() },
+];
 
-    let uniques = users.as_uniques();
-    println!("Unique IDs: {:?}", uniques);
+let uniques = users.as_uniques();
+println!("Unique IDs: {:?}", uniques);
 
-    if let Some(user) = users.find_by_unique(&1) {
-        println!("Found user: {}", user.name);
-    }
+if let Some(user) = users.find_by_unique(&1) {
+    println!("Found user: {}", user.name);
 }
 ```
 

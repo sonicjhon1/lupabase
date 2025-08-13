@@ -24,9 +24,13 @@ impl Database for MemoryDB {
         };
     }
 
-    fn dir(&self) -> PathBuf { self.dir.clone() }
+    fn dir(&self) -> PathBuf {
+        self.dir.clone()
+    }
 
-    fn file_path(&self, file_name: impl AsRef<Path>) -> PathBuf { self.dir.join(file_name) }
+    fn file_path(&self, file_name: impl AsRef<Path>) -> PathBuf {
+        self.dir.join(file_name)
+    }
 }
 
 impl DatabaseOps for MemoryDB {}
