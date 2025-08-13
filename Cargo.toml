@@ -1,9 +1,14 @@
 [package]
 name = "lupabase"
 version = "1.0.0"
-authors = ["Sonicjhon1"]
+authors = ["sonicjhon1"]
 edition = "2024"
+description = "Blazingly fast (work-in-progress) database engine written entirely in Rust"
+readme = "README.md"
+repository = "https://github.com/sonicjhon1/lupabase"
 license = "MIT OR Apache-2.0"
+keywords = ["database", "embedded", "in-memory", "json", "storage-engine"]
+categories = ["database-implementations"]
 
 [lib]
 path = "src/lib.rs"

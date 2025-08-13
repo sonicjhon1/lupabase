@@ -8,7 +8,7 @@ use std::{
 };
 use tracing::{info, warn};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct MemoryDB {
     dir: PathBuf,
     store: Arc<RwLock<HashMap<PathBuf, Value>>>,

@@ -6,7 +6,7 @@ use std::{
 };
 use tracing::{info, warn};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct JsonDB {
     db_dir: PathBuf,
 }
@@ -26,7 +26,9 @@ impl Database for JsonDB {
 
         Self { db_dir: dir.into() }
     }
-    fn dir(&self) -> PathBuf { self.db_dir.clone() }
+    fn dir(&self) -> PathBuf {
+        self.db_dir.clone()
+    }
     fn file_path(&self, file_name: impl AsRef<Path>) -> PathBuf {
         self.dir().join(file_name).with_added_extension("jsondb")
     }
@@ -130,6 +132,7 @@ impl DatabaseTransaction for JsonDB {
     }
 }
 
+#[derive(Clone, Debug)]
 pub struct JsonDBTransaction {
     dir: PathBuf,
     records_before: MemoryDB,
@@ -148,9 +151,13 @@ impl Database for JsonDBTransaction {
         };
     }
 
-    fn dir(&self) -> PathBuf { self.dir.clone() }
+    fn dir(&self) -> PathBuf {
+        self.dir.clone()
+    }
 
-    fn file_path(&self, file_name: impl AsRef<Path>) -> PathBuf { self.dir.join(file_name) }
+    fn file_path(&self, file_name: impl AsRef<Path>) -> PathBuf {
+        self.dir.join(file_name)
+    }
 }
 
 impl DatabaseOps for JsonDBTransaction {}
