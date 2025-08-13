@@ -1,0 +1,25 @@
+[package]
+name = "lupabase"
+version = "1.0.0"
+authors = ["Sonicjhon1"]
+edition = "2024"
+license = "MIT OR Apache-2.0"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+chrono = { version = "0.4", features = ["clock", "serde"] }
+derive_more = { version = "2.0", features = ["from", "display", "error"] }
+hashbrown = { version = "0.15", features = ["nightly"] }
+itertools = "0.14"
+parking_lot = { version = "0.12", features = [
+    "nightly",
+    "hardware-lock-elision",
+] }
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.142"
+tracing = { version = "0.1", features = ["log"] }
+
+[lints.clippy]
+needless_return = "allow"
