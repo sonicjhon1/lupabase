@@ -3,7 +3,7 @@
 
 pub mod database;
 pub mod engine;
-mod error;
+pub mod error;
 mod utils;
 
 pub use error::{Error, Result};
