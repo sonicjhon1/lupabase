@@ -88,8 +88,7 @@ pub trait DatabaseOps: DatabaseOpsCustom {
         default_records: impl AsRef<[T]>,
     ) -> Result<()>
     where
-        Self: Database + Sized,
-    {
+        Self: Database + Sized, {
         return self
             .try_initialize_storage_with_path(default_records, self.file_path(T::PARTITION));
     }
@@ -209,8 +208,7 @@ pub trait DatabaseOpsCustom: DatabaseIO {
         path: impl AsRef<Path>,
     ) -> Result<()>
     where
-        Self: Database + Sized,
-    {
+        Self: Database + Sized, {
         return try_populate_storage(self, default_records, path);
     }
 }
@@ -227,9 +225,7 @@ pub trait DatabaseIO {
     ///
     /// This method attempts to convert the relative directory returned by [`DatabaseIO::dir`] into an absolute path.
     /// If obtaining an absolute path fails, it falls back to returning the original directory.
-    fn dir_absolute(&self) -> PathBuf {
-        std::path::absolute(self.dir()).unwrap_or(self.dir())
-    }
+    fn dir_absolute(&self) -> PathBuf { std::path::absolute(self.dir()).unwrap_or(self.dir()) }
 
     /// Returns a storage path with the provided file name
     fn file_path(&self, file_name: impl AsRef<Path>) -> PathBuf {
@@ -294,9 +290,7 @@ pub trait DatabaseTransaction: Database {
     ///
     /// # Errors
     /// - I/O
-    fn transact(&self) -> Result<Self::TransactionDB> {
-        return Ok(Self::TransactionDB::new(""));
-    }
+    fn transact(&self) -> Result<Self::TransactionDB> { return Ok(Self::TransactionDB::new("")); }
 
     /// Commits the current transaction in the given path
     ///

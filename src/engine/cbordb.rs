@@ -33,9 +33,7 @@ impl DatabaseOps for CborDB {}
 impl DatabaseIO for CborDB {
     const EXTENSION: &str = "cbordb";
 
-    fn dir(&self) -> PathBuf {
-        self.db_dir.clone()
-    }
+    fn dir(&self) -> PathBuf { self.db_dir.clone() }
 
     fn try_write_storage(&self, data: impl serde::Serialize, path: impl AsRef<Path>) -> Result<()> {
         let serialized =
@@ -90,9 +88,7 @@ impl DatabaseOps for CborDBTransaction {}
 impl DatabaseIO for CborDBTransaction {
     const EXTENSION: &str = "cbortransactdb";
 
-    fn dir(&self) -> PathBuf {
-        self.dir.clone()
-    }
+    fn dir(&self) -> PathBuf { self.dir.clone() }
 
     fn try_write_storage(&self, data: impl serde::Serialize, path: impl AsRef<Path>) -> Result<()> {
         return self.records_after.try_write_storage(data, path);

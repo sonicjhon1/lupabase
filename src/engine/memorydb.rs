@@ -30,9 +30,7 @@ impl DatabaseOps for MemoryDB {}
 impl DatabaseIO for MemoryDB {
     const EXTENSION: &str = "memorydb";
 
-    fn dir(&self) -> PathBuf {
-        self.dir.clone()
-    }
+    fn dir(&self) -> PathBuf { self.dir.clone() }
 
     fn try_write_storage(&self, data: impl serde::Serialize, path: impl AsRef<Path>) -> Result<()> {
         let serialized =
