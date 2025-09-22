@@ -14,7 +14,7 @@ pub struct MemoryDB {
 }
 
 impl Database for MemoryDB {
-    const NAME: &'static str = "MemoryDB";
+    const NAME: &str = "MemoryDB";
 
     fn new(dir: impl AsRef<Path>) -> Self {
         return Self {

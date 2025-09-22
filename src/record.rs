@@ -24,5 +24,5 @@ pub trait DatabaseRecord: Serialize + for<'a> Deserialize<'a> {
 /// Represents a Record that has a built-in partition
 pub trait DatabaseRecordPartitioned: DatabaseRecord {
     /// Specifies the partition where records of this type are stored
-    const PARTITION: &'static str;
+    const PARTITION: &str;
 }

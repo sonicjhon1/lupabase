@@ -11,7 +11,7 @@ pub struct CborDB {
 }
 
 impl Database for CborDB {
-    const NAME: &'static str = "CborDB";
+    const NAME: &str = "CborDB";
 
     fn new(dir: impl AsRef<Path>) -> Self {
         let dir = dir.as_ref();
@@ -72,7 +72,7 @@ pub struct CborDBTransaction {
 }
 
 impl Database for CborDBTransaction {
-    const NAME: &'static str = "CborDB-Transaction";
+    const NAME: &str = "CborDB-Transaction";
 
     fn new(dir: impl AsRef<Path>) -> Self {
         let memory_db = MemoryDB::new(&dir);

@@ -11,7 +11,7 @@ pub struct JsonDB {
 }
 
 impl Database for JsonDB {
-    const NAME: &'static str = "JsonDB";
+    const NAME: &str = "JsonDB";
 
     fn new(dir: impl AsRef<Path>) -> Self {
         let dir = dir.as_ref();
@@ -72,7 +72,7 @@ pub struct JsonDBTransaction {
 }
 
 impl Database for JsonDBTransaction {
-    const NAME: &'static str = "JsonDB-Transaction";
+    const NAME: &str = "JsonDB-Transaction";
 
     fn new(dir: impl AsRef<Path>) -> Self {
         let memory_db = MemoryDB::new(&dir);

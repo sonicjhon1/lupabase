@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 /// built upon the functionality provided by [`DatabaseOps`] and [`DatabaseIO`]
 pub trait Database: DatabaseOps + DatabaseIO {
     /// The name of the Database
-    const NAME: &'static str;
+    const NAME: &str;
 
     /// Creates a new instance of [`Database`] with the specified base directory where files will be stored
     fn new(dir: impl AsRef<Path>) -> Self;

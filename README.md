@@ -39,7 +39,7 @@ struct User {
 }
 
 impl DatabaseRecordPartitioned for User {
-    const PARTITION: &'static str = "users";
+    const PARTITION: &str = "users";
 }
 
 impl DatabaseRecord for User {
