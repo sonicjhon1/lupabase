@@ -1,4 +1,7 @@
-use crate::{Error, Result, database::Database, record::*, record_utils::DatabaseRecordsUtils};
+use crate::{
+    Deserialize, Error, Result, Serialize, database::Database, record::*,
+    record_utils::DatabaseRecordsUtils,
+};
 use std::{
     fs::{self, create_dir_all},
     path::Path,
@@ -41,12 +44,12 @@ pub fn check_is_all_existing_records<R: DatabaseRecord>(
     Ok(())
 }
 
-pub fn try_populate_storage<D: Database, R: DatabaseRecord>(
+pub fn try_populate_storage<D: Database, O: Serialize + for<'a> Deserialize<'a>>(
     database: &D,
-    default_records: impl AsRef<[R]>,
+    default_data: O,
     path: impl AsRef<Path>,
 ) -> Result<()> {
-    match database.try_read_storage::<Vec<R>>(&path) {
+    match database.try_read_storage::<O>(&path) {
         Ok(_) => {}
         Err(Error::DBNotFound { file_path }) => {
             warn!(
@@ -55,7 +58,7 @@ pub fn try_populate_storage<D: Database, R: DatabaseRecord>(
                 D::NAME
             );
 
-            database.try_write_storage(default_records.as_ref(), &path)?;
+            database.try_write_storage(default_data, &path)?;
         }
         Err(e) => return Err(e),
     };

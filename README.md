@@ -32,7 +32,7 @@ use lupabase::prelude::*;
 use serde::{Serialize, Deserialize};
 
 // Setup Record
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 struct User {
     id: u32,
     name: String,
@@ -53,21 +53,21 @@ impl DatabaseRecord for User {
 // Create a new Database (This example uses in-memory database that is wiped on exit)
 let db = memorydb::MemoryDB::new("Test");
 
-// Initialize the Database
-// Query
 let users = vec![
     User { id: 0, name: "Alice".into() },
     User { id: 1, name: "Bob".into() },
 ];
 
-db.try_initialize_storage(&users).unwrap();
+// Initialize the Database
+db.try_initialize_storage::<User, _>(users.clone()).unwrap();
 
+// Query
 let users_db = db.get_all::<User>().unwrap();
 assert_eq!(users_db, users);
 
 // Initialize the Database with a custom storage path
-// The ::<User> parameter is optional if the default_record is not empty
-db.try_initialize_storage_with_path::<User>(&[], "custom_path").unwrap();
+// The ::<Vec<User>> parameter is optional if the default_record is inferable / not empty
+db.try_initialize_storage_with_path::<Vec<User>>(vec![], "custom_path").unwrap();
 
 // Query from custom storage path
 db.insert_with_path(User { id: 2, name: "Lupa".into() }, "custom_path").unwrap();

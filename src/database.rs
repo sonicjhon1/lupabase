@@ -83,14 +83,17 @@ pub trait DatabaseOps: DatabaseOpsCustom {
     /// # Errors
     /// - I/O
     /// - Parsing failure
-    fn try_initialize_storage<T: DatabaseRecordPartitioned>(
+    fn try_initialize_storage<
+        T: DatabaseRecordPartitioned,
+        O: Serialize + for<'a> Deserialize<'a>,
+    >(
         &self,
-        default_records: impl AsRef<[T]>,
+        default_data: O,
     ) -> Result<()>
     where
         Self: Database + Sized, {
         return self
-            .try_initialize_storage_with_path(default_records, self.file_path(T::PARTITION));
+            .try_initialize_storage_with_path::<O>(default_data, self.file_path(T::PARTITION));
     }
 }
 
@@ -199,17 +202,17 @@ pub trait DatabaseOpsCustom: DatabaseIO {
         return self.try_write_storage(records, path);
     }
 
-    /// Attempts to initialize the provided default [`DatabaseRecord`] into the given storage path
+    /// Attempts to initialize the provided default data into the given storage path
     ///
     /// See [`DatabaseOps::try_initialize_storage`] for details and the list of possible errors.
-    fn try_initialize_storage_with_path<T: DatabaseRecord>(
+    fn try_initialize_storage_with_path<O: Serialize + for<'a> Deserialize<'a>>(
         &self,
-        default_records: impl AsRef<[T]>,
+        default_data: O,
         path: impl AsRef<Path>,
     ) -> Result<()>
     where
         Self: Database + Sized, {
-        return try_populate_storage(self, default_records, path);
+        return try_populate_storage::<_, O>(self, default_data, path);
     }
 }
 
