@@ -17,7 +17,7 @@ pub trait DatabaseRecord: Serialize + for<'a> Deserialize<'a> {
     /// Returns the unique identifier of the record
     ///
     /// This method should provide a value that uniquely identifies records of the same type,
-    /// essential for [`DatabaseOps`].
+    /// essential for database operations.
     fn unique_value(&self) -> Self::Unique;
 }
 
