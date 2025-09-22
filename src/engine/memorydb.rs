@@ -24,13 +24,9 @@ impl Database for MemoryDB {
         };
     }
 
-    fn dir(&self) -> PathBuf {
-        self.dir.clone()
-    }
+    fn dir(&self) -> PathBuf { self.dir.clone() }
 
-    fn file_path(&self, file_name: impl AsRef<Path>) -> PathBuf {
-        self.dir.join(file_name)
-    }
+    fn file_path(&self, file_name: impl AsRef<Path>) -> PathBuf { self.dir.join(file_name) }
 }
 
 impl DatabaseOps for MemoryDB {}
@@ -62,7 +58,8 @@ impl DatabaseIO for MemoryDB {
 
     fn try_write_file<T: DatabaseRecord>(&self, data: impl serde::Serialize) -> Result<()> {
         let partition_path = self.file_path(T::PARTITION);
-        let serialized = serde_json::to_value(&data).map_err(Error::JSONSerializationFailure)?;
+        let serialized =
+            serde_json::to_value(&data).map_err(|e| Error::SerializationFailure(Box::new(e)))?;
 
         let mut guard = self.store.write();
         let _ = guard.insert(partition_path, serialized);
@@ -87,7 +84,7 @@ impl DatabaseIO for MemoryDB {
 
             return Error::DBCorrupt {
                 file_path: partition_path,
-                reason: Error::JSONDeserializationFailure(e).to_string(),
+                reason: Error::DeserializationFailure(Box::new(e)).to_string(),
             };
         })
     }

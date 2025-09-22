@@ -7,12 +7,12 @@ use std::{
 use tracing::{info, warn};
 
 #[derive(Clone, Debug)]
-pub struct JsonDB {
+pub struct CborDB {
     db_dir: PathBuf,
 }
 
-impl Database for JsonDB {
-    const NAME: &'static str = "JsonDB";
+impl Database for CborDB {
+    const NAME: &'static str = "CborDB";
 
     fn new(dir: impl AsRef<Path>) -> Self {
         let dir = dir.as_ref();
@@ -22,19 +22,19 @@ impl Database for JsonDB {
                 path: dir.display().to_string(),
                 reason: e,
             })
-            .expect("JsonDB directories creation should succeed.");
+            .expect("CborDB directories creation should succeed.");
 
         Self { db_dir: dir.into() }
     }
     fn dir(&self) -> PathBuf { self.db_dir.clone() }
     fn file_path(&self, file_name: impl AsRef<Path>) -> PathBuf {
-        self.dir().join(file_name).with_added_extension("jsondb")
+        self.dir().join(file_name).with_added_extension("Cbordb")
     }
 }
 
-impl DatabaseOps for JsonDB {}
+impl DatabaseOps for CborDB {}
 
-impl DatabaseIO for JsonDB {
+impl DatabaseIO for CborDB {
     fn try_initialize_file<T: DatabaseRecord>(
         &self,
         default_records: impl AsRef<[T]>,
@@ -61,7 +61,7 @@ impl DatabaseIO for JsonDB {
     fn try_write_file<T: DatabaseRecord>(&self, data: impl serde::Serialize) -> Result<()> {
         let file_path = &self.file_path(T::PARTITION);
         let serialized =
-            serde_json::to_vec(&data).map_err(|e| Error::SerializationFailure(Box::new(e)))?;
+            minicbor_serde::to_vec(&data).map_err(|e| Error::SerializationFailure(Box::new(e)))?;
 
         if let Some(parent) = file_path.parent() {
             create_dir_all(parent).map_err(|e| Error::IOCreateDirFailure {
@@ -84,7 +84,7 @@ impl DatabaseIO for JsonDB {
     }
     fn try_read_file<T: DatabaseRecord, O: for<'a> Deserialize<'a>>(&self) -> Result<O> {
         let file_path = &self.file_path(T::PARTITION);
-        let file_data = fs::read_to_string(file_path).map_err(|e| match e.kind() {
+        let file_data = fs::read(file_path).map_err(|e| match e.kind() {
             std::io::ErrorKind::NotFound => Error::DBNotFound {
                 file_path: file_path.to_path_buf(),
             },
@@ -94,7 +94,7 @@ impl DatabaseIO for JsonDB {
             },
         })?;
 
-        serde_json::from_str(&file_data).map_err(|e| {
+        minicbor_serde::from_slice(&file_data).map_err(|e| {
             let backup_path = file_path
                 .with_extension(format!("-FAILED-{}.bak", &chrono::Local::now().timestamp()));
 
@@ -122,8 +122,8 @@ impl DatabaseIO for JsonDB {
     }
 }
 
-impl DatabaseTransaction for JsonDB {
-    type TransactionDB = JsonDBTransaction;
+impl DatabaseTransaction for CborDB {
+    type TransactionDB = CborDBTransaction;
 
     fn try_rollback<T: DatabaseRecord>(&self, transaction: &Self::TransactionDB) -> Result<()> {
         let records_before = transaction.records_before.get_all::<T>()?;
@@ -132,14 +132,14 @@ impl DatabaseTransaction for JsonDB {
 }
 
 #[derive(Clone, Debug)]
-pub struct JsonDBTransaction {
+pub struct CborDBTransaction {
     dir: PathBuf,
     records_before: MemoryDB,
     records_after: MemoryDB,
 }
 
-impl Database for JsonDBTransaction {
-    const NAME: &'static str = "JsonDB-Transaction";
+impl Database for CborDBTransaction {
+    const NAME: &'static str = "CborDB-Transaction";
 
     fn new(dir: impl AsRef<Path>) -> Self {
         let memory_db = MemoryDB::new(&dir);
@@ -155,9 +155,9 @@ impl Database for JsonDBTransaction {
     fn file_path(&self, file_name: impl AsRef<Path>) -> PathBuf { self.dir.join(file_name) }
 }
 
-impl DatabaseOps for JsonDBTransaction {}
+impl DatabaseOps for CborDBTransaction {}
 
-impl DatabaseIO for JsonDBTransaction {
+impl DatabaseIO for CborDBTransaction {
     fn try_initialize_file<T: DatabaseRecord>(
         &self,
         default_records: impl AsRef<[T]>,
