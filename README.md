@@ -29,10 +29,10 @@ Lupabase is a **blazingly fast** (work-in-progress) database engine, written ent
 ## Example/Usage
 ```rust 
 use lupabase::prelude::*;
-use lupabase::record_utils::*;
 use serde::{Serialize, Deserialize};
 
-#[derive(Serialize, Deserialize)]
+// Setup Record
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 struct User {
     id: u32,
     name: String,
@@ -50,15 +50,39 @@ impl DatabaseRecord for User {
     }
 }
 
+// Create a new Database (This example uses in-memory database that is wiped on exit)
+let db = memorydb::MemoryDB::new("Test");
+
+// Initialize the Database
+// Query
 let users = vec![
-    User { id: 1, name: "Alice".into() },
-    User { id: 2, name: "Bob".into() },
+    User { id: 0, name: "Alice".into() },
+    User { id: 1, name: "Bob".into() },
 ];
 
-let uniques = users.as_uniques();
+db.try_initialize_storage(&users).unwrap();
+
+let users_db = db.get_all::<User>().unwrap();
+assert_eq!(users_db, users);
+
+// Initialize the Database with a custom storage path
+// The ::<User> parameter is optional if the default_record is not empty
+db.try_initialize_storage_with_path::<User>(&[], "custom_path").unwrap();
+
+// Query from custom storage path
+db.insert_with_path(User { id: 2, name: "Lupa".into() }, "custom_path").unwrap();
+
+let users_custom_db = db.get_all_with_path::<User>("custom_path").unwrap();
+assert_eq!(users_custom_db.len(), 1);
+assert_eq!(users_custom_db[0].unique_value(), 2);
+
+// Additional helpers
+use lupabase::record_utils::*;
+
+let uniques = users_db.as_uniques();
 println!("Unique IDs: {:?}", uniques);
 
-if let Some(user) = users.find_by_unique(&1) {
+if let Some(user) = users_db.find_by_unique(&1) {
     println!("Found user: {}", user.name);
 }
 ```
