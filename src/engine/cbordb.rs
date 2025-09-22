@@ -1,5 +1,5 @@
 use super::memorydb::MemoryDB;
-use crate::{Deserialize, Error, Result, database::*, utils::*};
+use crate::{Deserialize, Error, Result, prelude::*, utils::*};
 use std::{
     fs::create_dir_all,
     path::{Path, PathBuf},
@@ -27,6 +27,7 @@ impl Database for CborDB {
     }
 }
 
+impl DatabaseOpsCustom for CborDB {}
 impl DatabaseOps for CborDB {}
 
 impl DatabaseIO for CborDB {
@@ -83,6 +84,7 @@ impl Database for CborDBTransaction {
     }
 }
 
+impl DatabaseOpsCustom for CborDBTransaction {}
 impl DatabaseOps for CborDBTransaction {}
 
 impl DatabaseIO for CborDBTransaction {

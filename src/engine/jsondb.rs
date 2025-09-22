@@ -1,5 +1,5 @@
 use super::memorydb::MemoryDB;
-use crate::{Deserialize, Error, Result, database::*, utils::*};
+use crate::{Deserialize, Error, Result, prelude::*, utils::*};
 use std::{
     fs::create_dir_all,
     path::{Path, PathBuf},
@@ -27,6 +27,7 @@ impl Database for JsonDB {
     }
 }
 
+impl DatabaseOpsCustom for JsonDB {}
 impl DatabaseOps for JsonDB {}
 
 impl DatabaseIO for JsonDB {
@@ -83,6 +84,7 @@ impl Database for JsonDBTransaction {
     }
 }
 
+impl DatabaseOpsCustom for JsonDBTransaction {}
 impl DatabaseOps for JsonDBTransaction {}
 
 impl DatabaseIO for JsonDBTransaction {

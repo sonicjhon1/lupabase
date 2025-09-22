@@ -1,13 +1,9 @@
-use tracing::{info, warn};
-
-use crate::{
-    Error, Result,
-    database::{Database, DatabaseRecord, DatabaseRecordsUtils},
-};
+use crate::{Error, Result, database::Database, record::*, record_utils::DatabaseRecordsUtils};
 use std::{
     fs::{self, create_dir_all},
     path::Path,
 };
+use tracing::{info, warn};
 
 pub fn check_is_all_new_records<R: DatabaseRecord>(
     current_records: &[R],

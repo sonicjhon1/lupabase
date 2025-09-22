@@ -28,7 +28,8 @@ Lupabase is a **blazingly fast** (work-in-progress) database engine, written ent
 
 ## Example/Usage
 ```rust 
-use lupabase::database::*;
+use lupabase::prelude::*;
+use lupabase::record_utils::*;
 use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize)]
@@ -37,9 +38,12 @@ struct User {
     name: String,
 }
 
+impl DatabaseRecordPartitioned for User {
+    const PARTITION: &'static str = "users";
+}
+
 impl DatabaseRecord for User {
     type Unique = u32;
-    const PARTITION: &'static str = "users";
 
     fn unique_value(&self) -> Self::Unique {
         self.id

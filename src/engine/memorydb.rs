@@ -1,4 +1,4 @@
-use crate::{Deserialize, Error, Result, database::*};
+use crate::{Deserialize, Error, Result, prelude::*};
 use hashbrown::HashMap;
 use parking_lot::RwLock;
 use std::{
@@ -24,6 +24,7 @@ impl Database for MemoryDB {
     }
 }
 
+impl DatabaseOpsCustom for MemoryDB {}
 impl DatabaseOps for MemoryDB {}
 
 impl DatabaseIO for MemoryDB {
