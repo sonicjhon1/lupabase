@@ -1,4 +1,4 @@
-use crate::{Deserialize, Error, Result, Serialize};
+use crate::{Deserialize, Error, Result, Serialize, utils::*};
 use itertools::Itertools;
 use std::{
     fmt::Debug,
@@ -6,179 +6,140 @@ use std::{
     path::{Path, PathBuf},
 };
 
+/// Unique identifier for [`DatabaseRecord`]
+///
+/// This type must implement [`Hash`], [`Eq`], and [`Debug`] to ensure proper comparison and debugging capabilities.
 pub trait IntoUnique: Hash + Eq + Debug + Serialize {}
 impl<T: Hash + Eq + Debug + Serialize> IntoUnique for T {}
 
-/// Represents a record that can be stored in the database.
+/// Represents a Record that can be stored
 ///
-/// This trait enforces that any record is both serializable and deserializable,
-/// and that it can provide a unique identifier for itself. The unique identifier is
-/// critical for performing operations like finding, inserting, updating, or deleting a specific record.
-///
-/// # Associated Types
-///
-/// * `Unique` - The type of the unique identifier for the record. This type must implement
-///   `Hash`, `Eq`, and `Debug` to ensure proper comparison and debugging capabilities.
-///
-/// # Constants
-///
-/// * `PARTITION` - A static string that specifies the partition where records
-///   of this type are stored. This allows the database to organize records by type or category.
+/// Record must implement both [`Serialize`] and [`Deserialize`]
 pub trait DatabaseRecord: Serialize + for<'a> Deserialize<'a> {
+    /// The type of the unique identifier that implements [`IntoUnique`]
     type Unique: IntoUnique;
+
+    /// Specifies the partition where records of this type are stored
     const PARTITION: &'static str;
 
-    /// Returns the unique identifier of the record.
+    /// Returns the unique identifier of the record
     ///
-    /// This method should provide a value that uniquely identifies the record among all records
-    /// of the same type. It is essential for operations that require matching, updating, or deleting
-    /// specific records in the database.
+    /// This method should provide a value that uniquely identifies records of the same type,
+    /// essential for [`DatabaseOps`].
     fn unique_value(&self) -> Self::Unique;
 }
 
-/// Represents a database that provides operations for reading, writing,
-/// and managing records, built upon the functionality provided by `DatabaseOps` and `DatabaseIO`.
-///
-/// A type implementing this trait can be instantiated with a base directory, and provides
-/// methods to retrieve the database directory (both relative and absolute) as well as to build
-/// full file paths within that directory.
+/// Represents a database that provides operations for managing records,
+/// built upon the functionality provided by [`DatabaseOps`] and [`DatabaseIO`]
 pub trait Database: DatabaseOps + DatabaseIO {
     const NAME: &'static str;
 
-    /// Creates a new instance of the database with the specified base directory.
-    ///
-    /// # Parameters
-    ///
-    /// * `dir` - A value that can be referenced as a `Path`, representing the base directory
-    ///   where the database files will be stored.
-    ///
-    /// # Returns
-    ///
-    /// * `Self` - A new instance of the database.
+    /// Creates a new instance of [`Database`] with the specified base directory where files will be stored.
     fn new(dir: impl AsRef<Path>) -> Self;
-    /// Returns the base directory of the database as a `PathBuf`.
-    ///
-    /// This directory is used as the root for all database file operations.
-    fn dir(&self) -> PathBuf;
-    /// Returns the absolute path of the database's base directory.
-    ///
-    /// This method attempts to convert the relative directory returned by `dir()` into an absolute path.
-    /// If obtaining an absolute path fails, it falls back to returning the original directory.
-    fn dir_absolute(&self) -> PathBuf {
-        std::path::absolute(self.dir()).unwrap_or(self.dir())
-    }
-    /// Constructs a full file path by joining the database's base directory with the provided file name.
-    ///
-    /// # Parameters
-    ///
-    /// * `file_name` - A value that can be referenced as a `Path`, representing the name (or relative path)
-    ///   of the file within the database directory.
-    ///
-    /// # Returns
-    ///
-    /// * `PathBuf` - The full file path corresponding to the given file name within the database directory.
-    fn file_path(&self, file_name: impl AsRef<Path>) -> PathBuf;
 }
 
-/// Provides common database operations built on top of the `DatabaseIO` functionality.
+/// Provides common database operations built on top of [`DatabaseIO`]
 ///
-/// This trait supplies generic implementations for retrieving, inserting, updating,
-/// and replacing records in the database. It leverages helper methods such as
-/// `try_read_file` and `try_write_file` from the `DatabaseIO` trait and uses the
-/// unique identifier provided by the `DatabaseRecord` trait to detect conflicts.
+/// This trait supplies generic implementations for initializem retrieving,
+/// inserting, updating, and replacing records in the database.
 pub trait DatabaseOps: DatabaseIO {
-    /// Retrieves all records of type `T` from the database.
+    /// Read all [`DatabaseRecord`] from the given path
     ///
-    /// This method reads and returns a vector of records using the underlying file I/O mechanism.
+    /// See [`DatabaseOps::get_all`] for details and the list of possible errors.
+    fn get_all_with_path<T: DatabaseRecord>(&self, path: impl AsRef<Path>) -> Result<Vec<T>> {
+        return self.try_read_storage::<Vec<T>>(path);
+    }
+
+    /// Retrieves all [`DatabaseRecord`] from storage
     ///
     /// # Errors
-    ///
-    /// Returns an error if:
-    /// - The underlying file read or write operations fail.
-    /// - Duplicate unique identifiers are detected in the records.
+    /// - I/O
+    /// - Duplicate unique identifiers
     fn get_all<T: DatabaseRecord>(&self) -> Result<Vec<T>> {
-        return self.try_read_file::<T, Vec<T>>();
+        return self.get_all_with_path(self.file_path(T::PARTITION));
     }
-    /// Inserts a single record of type `T` into the database.
+
+    /// Inserts a single [`DatabaseRecord`] into the given path
     ///
-    /// The record is wrapped in a slice and passed to `insert_all`.
-    /// If the insertion fails (for example, due to a duplicate unique identifier),
-    /// an error is returned.
+    /// See [`DatabaseOps::insert`] for details and the list of possible errors.
+    fn insert_with_path<T: DatabaseRecord>(
+        &self,
+        updated_record: T,
+        path: impl AsRef<Path>,
+    ) -> Result<()> {
+        return self.insert_all_with_path([updated_record], path);
+    }
+
+    /// Inserts a single [`DatabaseRecord`] into storage.
+    /// The record is wrapped into a slice and passed to [`DatabaseOps::insert_all`].
+    ///
+    /// See [`DatabaseOps::insert_all`] for details and the list of possible errors.
     fn insert<T: DatabaseRecord>(&self, updated_record: T) -> Result<()> {
-        return self.insert_all([updated_record]);
+        return self.insert_with_path(updated_record, self.file_path(T::PARTITION));
     }
-    /// Inserts multiple records into the database.
+
+    /// Inserts multiple [`DatabaseRecord`] into the given path
     ///
-    /// This method retrieves the current records and compares them with the new records
-    /// using their unique identifiers. If any new record has a unique identifier that already
-    /// exists in the current records, the method returns an error indicating the duplicate values.
-    /// Otherwise, it concatenates the existing records and the new records (as references) and writes
-    /// the combined collection back to the database using the underlying file I/O mechanism.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if:
-    /// - The underlying file read or write operations fail.
-    /// - A duplicate unique identifier is found among the new records.
-    fn insert_all<T: DatabaseRecord>(&self, new_records: impl AsRef<[T]>) -> Result<()> {
+    /// See [`DatabaseOps::insert_all`] for details and the list of possible errors.
+    fn insert_all_with_path<T: DatabaseRecord>(
+        &self,
+        new_records: impl AsRef<[T]>,
+        path: impl AsRef<Path>,
+    ) -> Result<()> {
         let records = self.get_all::<T>()?;
         let new_records = new_records.as_ref();
 
-        let duplicates = &records.find_intersecting_uniques_from(new_records);
-        if !duplicates.is_empty() {
-            return Err(Error::DBOperationFailure {
-                partition: T::PARTITION.into(),
-                reason: format!(
-                    "Found duplicate Unique value(s) in record(s) when inserting: [{duplicates:#?}].",
-                ),
-            });
-        };
+        check_is_all_new_records(&records, new_records, &path)?;
 
-        return self.try_write_file::<T>(
+        return self.try_write_storage(
             records
                 .iter()
                 .chain(new_records.iter())
                 .collect::<Vec<&T>>(),
+            path,
         );
     }
-    /// Updates a single record of type `T` in the database.
-    ///
-    /// The record is wrapped in a slice and passed to `update_all`.
-    /// If the update fails (for example, due to a missing matching record),
-    /// an error is returned.
-    fn update<T: DatabaseRecord>(&self, updated_record: T) -> Result<()> {
-        return self.update_all(vec![updated_record]);
-    }
-    /// Updates multiple records in the database.
-    ///
-    /// This method retrieves all current records and attempts to update each one with a corresponding
-    /// record from the provided collection. Each updated record is matched by its unique identifier.
-    /// If any record in the updated collection does not have a matching record in the current database,
-    /// the method returns an error indicating the missing unique identifier(s).
-    /// Otherwise, the records are updated in place and the new collection is written back to the database.
+
+    /// Inserts multiple [`DatabaseRecord`] into storage
     ///
     /// # Errors
+    /// - I/O
+    /// - Duplicate unique identifier is found among the new records
+    fn insert_all<T: DatabaseRecord>(&self, new_records: impl AsRef<[T]>) -> Result<()> {
+        return self.insert_all_with_path(new_records, self.file_path(T::PARTITION));
+    }
+
+    /// Updates a single [`DatabaseRecord`] into the given path
     ///
-    /// Returns an error if:
-    /// - The current records cannot be retrieved.
-    /// - A record in the updated collection does not match any record in the current database.
-    /// - The underlying file read or write operations fail.
-    fn update_all<T: DatabaseRecord>(
+    /// See [`DatabaseOps::update`] for details and the list of possible errors.
+    fn update_with_path<T: DatabaseRecord>(
+        &self,
+        updated_record: T,
+        path: impl AsRef<Path>,
+    ) -> Result<()> {
+        return self.update_all_with_path([updated_record], path);
+    }
+
+    /// Updates a single [`DatabaseRecord`] in storage.
+    /// The record is wrapped into a slice and passed to [`DatabaseOps::update_all`].
+    ///
+    /// See [`DatabaseOps::update_all`] for details and the list of possible errors.
+    fn update<T: DatabaseRecord>(&self, updated_record: T) -> Result<()> {
+        return self.update_with_path(updated_record, self.file_path(T::PARTITION));
+    }
+
+    /// Updates multiple [`DatabaseRecord`] into the given path
+    ///
+    /// See [`DatabaseOps::update_all`] for details and the list of possible errors.
+    fn update_all_with_path<T: DatabaseRecord>(
         &self,
         updated_records: impl IntoIterator<Item = T>,
+        path: impl AsRef<Path>,
     ) -> Result<()> {
         let mut records = self.get_all::<T>()?;
         let updated_records: Vec<T> = updated_records.into_iter().collect();
 
-        let non_matching = &records.find_non_intersecting_uniques_from(&updated_records);
-        if !non_matching.is_empty() {
-            return Err(Error::DBOperationFailure {
-                partition: T::PARTITION.into(),
-                reason: format!(
-                    "Found non-matching Unique value(s) in record(s) when updating: [{non_matching:?}].",
-                ),
-            });
-        };
+        check_is_all_existing_records(&records, &updated_records, &path)?;
 
         updated_records.into_iter().for_each(|ur| {
             let record = records
@@ -186,30 +147,36 @@ pub trait DatabaseOps: DatabaseIO {
                 .expect("All records should exist as it was checked before.");
             *record = ur;
         });
-        return self.try_write_file::<T>(records);
+        return self.try_write_storage(records, path);
     }
-    /// Replaces all records with the provided updated records.
-    ///
-    /// This function iterates through the updated records and ensures that each record has a unique
-    /// identifier within the provided collection. If any duplicate unique identifier is encountered,
-    /// it returns an error. Otherwise, the new collection of records is written to the database using
-    /// the underlying file I/O mechanism.
+
+    /// Updates multiple [`DatabaseRecord`] in storage
     ///
     /// # Errors
-    ///
-    /// Returns an error if:
-    /// - A duplicate unique identifier is found among the updated records.
-    /// - The underlying file read or write operations fail.
-    fn replace_all<T: DatabaseRecord>(
+    /// - I/O
+    /// - Duplicate unique identifier is found among the updated records
+    /// - Unmatched unique identifier is found
+    fn update_all<T: DatabaseRecord>(
         &self,
         updated_records: impl IntoIterator<Item = T>,
+    ) -> Result<()> {
+        return self.update_all_with_path(updated_records, self.file_path(T::PARTITION));
+    }
+
+    /// Replace all [`DatabaseRecord`] into the given path with the provided [`DatabaseRecord`]
+    ///
+    /// See [`DatabaseOps::replace_all`] for details and the list of possible errors.
+    fn replace_all_with_path<T: DatabaseRecord>(
+        &self,
+        updated_records: impl IntoIterator<Item = T>,
+        path: impl AsRef<Path>,
     ) -> Result<()> {
         let mut records: Vec<T> = vec![];
 
         for ur in updated_records.into_iter() {
             if let Some(duplicate_record) = records.find_by_unique(&ur.unique_value()) {
                 return Err(Error::DBOperationFailure {
-                    partition: T::PARTITION.into(),
+                    path: path.as_ref().display().to_string(),
                     reason: format!(
                         "Found duplicated unique value in records when replacing: [{:?}].",
                         duplicate_record.unique_value()
@@ -220,74 +187,117 @@ pub trait DatabaseOps: DatabaseIO {
             records.push(ur);
         }
 
-        return self.try_write_file::<T>(records);
+        return self.try_write_storage(records, path);
+    }
+
+    /// Replace all [`DatabaseRecord`] in storage with the provided [`DatabaseRecord`]
+    ///
+    /// # Errors
+    /// - I/O
+    /// - Duplicate unique identifier is found among the updated records
+    fn replace_all<T: DatabaseRecord>(
+        &self,
+        updated_records: impl IntoIterator<Item = T>,
+    ) -> Result<()> {
+        return self.replace_all_with_path(updated_records, self.file_path(T::PARTITION));
+    }
+
+    /// Attempts to initialize the provided default [`DatabaseRecord`] into the given storage path
+    ///
+    /// See [`DatabaseIO::try_initialize_file`] for details and the list of possible errors.
+    fn try_initialize_storage_with_path<T: DatabaseRecord>(
+        &self,
+        default_records: impl AsRef<[T]>,
+        path: impl AsRef<Path>,
+    ) -> Result<()>
+    where
+        Self: Database + Sized,
+    {
+        return try_populate_storage(self, default_records, path);
+    }
+
+    /// Attempts to initialize the provided default [`DatabaseRecord`] into storage
+    ///
+    /// This method should check if the file already exists and validates its contents,
+    /// returning an error if the file content is corrupted. If the file does not exist,
+    /// it creates the database file using the provided default [`DatabaseRecord`].
+    ///
+    /// # Errors
+    /// - I/O
+    /// - Parsing failure
+    fn try_initialize_storage<T: DatabaseRecord>(
+        &self,
+        default_records: impl AsRef<[T]>,
+    ) -> Result<()>
+    where
+        Self: Database + Sized,
+    {
+        return self
+            .try_initialize_storage_with_path(default_records, self.file_path(T::PARTITION));
     }
 }
 
-/// Defines operations for file-based database I/O.
-///
-/// This trait provides methods to initialize, write to, and read from a database file.
+/// Provides operations for database I/O
 pub trait DatabaseIO {
-    /// Attempts to initialize the database file with the provided default records.
+    /// The extension for the storage's path
+    const EXTENSION: &str;
+
+    /// Returns the storage's base directory used for all I/O
+    fn dir(&self) -> PathBuf;
+
+    /// Returns the absolute path of the storage's base directory
     ///
-    /// This method checks if the file already exists and validates its contents,
-    /// returning an error if the file content is corrupted. If the file does not exist,
-    /// it creates the database file using the provided default records.
-    ///
-    /// The `default_records` parameter is generic over any type that can be referenced as
-    /// a slice of records (`AsRef<[T]>`), which allows for flexibility in the types of
-    /// collections that can be passed in (e.g., a `Vec<T>` or a slice `&[T]`).
-    ///
-    /// # Type Parameters
-    ///
-    /// - `T`: The record type, which must implement the `DatabaseRecord` trait.
-    ///
-    /// # Parameters
-    ///
-    /// * `default_records` - A collection of default records to initialize the file with.
-    ///
-    /// # Returns
-    ///
-    /// * `Result<()>` - Returns `Ok(())` if the file is successfully initialized,
-    ///   or an `Err(Error)` if the initialization fails.
-    fn try_initialize_file<T: DatabaseRecord>(
+    /// This method attempts to convert the relative directory returned by [`DatabaseIO::dir`] into an absolute path.
+    /// If obtaining an absolute path fails, it falls back to returning the original directory.
+    fn dir_absolute(&self) -> PathBuf {
+        std::path::absolute(self.dir()).unwrap_or(self.dir())
+    }
+
+    /// Returns a storage path with the provided file name
+    fn file_path(&self, file_name: impl AsRef<Path>) -> PathBuf {
+        self.dir()
+            .join(file_name)
+            .with_added_extension(Self::EXTENSION)
+    }
+
+    fn try_backup_storage(
         &self,
-        default_records: impl AsRef<[T]>,
-    ) -> Result<()>;
-    /// Attempts to write the provided data to the database file.
+        path: impl AsRef<Path>,
+        reason: impl AsRef<str>,
+    ) -> Result<PathBuf> {
+        let path = path.as_ref();
+
+        let backup_path = path.with_extension(format!(
+            "-{}-{}.bak",
+            &chrono::Local::now().timestamp(),
+            reason.as_ref()
+        ));
+
+        if let Err(e) = std::fs::copy(path, &backup_path) {
+            return Err(Error::IOCopyFailure {
+                path_from: path.display().to_string(),
+                path_destination: backup_path.display().to_string(),
+                reason: e,
+            });
+        };
+
+        return Ok(backup_path);
+    }
+
+    /// Attempts to write the provided data (usually some form of [`DatabaseRecord`]) to storage
     ///
-    /// This method serializes the given `data` and writes it to the file. The data
-    /// must implement the `Serialize` trait to be converted into a storable format.
+    /// # Errors
+    /// - I/O
+    /// - Parsing failure
+    fn try_write_storage(&self, data: impl Serialize, path: impl AsRef<Path>) -> Result<()>;
+
+    /// Attempts to read data from storage and deserialize it into the specified type of data
+    /// (usually some form of [`DatabaseRecord`])
     ///
-    /// # Type Parameters
-    ///
-    /// * `T` - The type of the records, which must implement `DatabaseRecord`.
-    ///
-    /// # Parameters
-    ///
-    /// * `data` - The data to serialize and write to the file.
-    ///
-    /// # Returns
-    ///
-    /// * `Result<()>` - Returns `Ok(())` if the write operation succeeds,
-    ///   or an error if it fails.
-    fn try_write_file<T: DatabaseRecord>(&self, data: impl Serialize) -> Result<()>;
-    /// Attempts to read data from the database file and deserialize it into the specified type.
-    ///
-    /// This method reads the file's content and attempts to deserialize it into an instance
-    /// of type `O`. The output type must implement `Deserialize` so that the file content
-    /// can be correctly parsed.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `T` - The type of the records, which must implement `DatabaseRecord`.
-    /// * `O` - The output type into which the file data should be deserialized.
-    ///   This type must implement `Deserialize`.
-    ///
-    /// # Returns
-    ///
-    /// * `Result<O>` - On success, returns the deserialized data; otherwise, returns an error.
-    fn try_read_file<T: DatabaseRecord, O: for<'a> Deserialize<'a>>(&self) -> Result<O>;
+    /// # Errors
+    /// - I/O
+    /// - Parsing failure
+    fn try_read_storage<O: for<'a> Deserialize<'a>>(&self, path: impl AsRef<Path>) -> Result<O>;
 }
 
 // TODO: Lock file when transaction started
@@ -319,6 +329,7 @@ pub trait DatabaseTransaction: Database {
     /// It must implement [`Database`] so that it can support all required operations and
     /// file interactions during a transaction.
     type TransactionDB: Database;
+
     /// Begins a new transaction.
     ///
     /// This method initiates a transaction by capturing the current state of the database in a
@@ -332,6 +343,7 @@ pub trait DatabaseTransaction: Database {
     fn transact(&self) -> Result<Self::TransactionDB> {
         return Ok(Self::TransactionDB::new(""));
     }
+
     /// Commits the current transaction.
     ///
     /// This method attempts to persist all changes made within the transactional context by
@@ -371,7 +383,17 @@ pub trait DatabaseTransaction: Database {
             }
         }
     }
-    /// Rolls back the current transaction.
+
+    /// Rolls back the current transaction in the given path
+    ///
+    /// See [`DatabaseTransaction::try_rollback`] for details and the list of possible errors.
+    fn try_rollback_with_path<T: DatabaseRecord>(
+        &self,
+        transaction: &Self::TransactionDB,
+        path: impl AsRef<Path>,
+    ) -> Result<()>;
+
+    /// Rolls back the current transaction
     ///
     /// In the event of an error or a decision not to persist the changes, this method reverts
     /// the database to its state prior to the start of the transaction. All modifications made
@@ -391,7 +413,9 @@ pub trait DatabaseTransaction: Database {
     ///
     /// * `Result<()>` — Returns `Ok(())` if the rollback operation completes successfully.
     ///   Otherwise, an error is returned indicating the failure to revert the changes.
-    fn try_rollback<T: DatabaseRecord>(&self, transaction: &Self::TransactionDB) -> Result<()>;
+    fn try_rollback<T: DatabaseRecord>(&self, transaction: &Self::TransactionDB) -> Result<()> {
+        self.try_rollback_with_path::<T>(transaction, self.file_path(T::PARTITION))
+    }
 }
 
 /// Provide utility methods for DatabaseRecord.

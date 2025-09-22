@@ -4,6 +4,7 @@
 pub mod database;
 pub mod engine;
 mod error;
+mod utils;
 
 pub use error::{Error, Result};
 pub(crate) use serde::{Deserialize, Serialize};

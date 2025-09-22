@@ -1,10 +1,9 @@
 use super::memorydb::MemoryDB;
-use crate::{Deserialize, Error, Result, database::*};
+use crate::{Deserialize, Error, Result, database::*, utils::*};
 use std::{
-    fs::{self, create_dir_all},
+    fs::create_dir_all,
     path::{Path, PathBuf},
 };
-use tracing::{info, warn};
 
 #[derive(Clone, Debug)]
 pub struct JsonDB {
@@ -26,110 +25,41 @@ impl Database for JsonDB {
 
         Self { db_dir: dir.into() }
     }
-    fn dir(&self) -> PathBuf {
-        self.db_dir.clone()
-    }
-    fn file_path(&self, file_name: impl AsRef<Path>) -> PathBuf {
-        self.dir().join(file_name).with_added_extension("jsondb")
-    }
 }
 
 impl DatabaseOps for JsonDB {}
 
 impl DatabaseIO for JsonDB {
-    fn try_initialize_file<T: DatabaseRecord>(
-        &self,
-        default_records: impl AsRef<[T]>,
-    ) -> Result<()> {
-        let file_path = &self.file_path(T::PARTITION);
+    const EXTENSION: &str = "jsondb";
 
-        match self.try_read_file::<T, Vec<T>>() {
-            Ok(_) => {}
-            Err(Error::DBNotFound { file_path }) => {
-                warn!(
-                    "Couldn't find [{}]. Trying to populate {}.",
-                    file_path.display(),
-                    Self::NAME
-                );
-
-                self.try_write_file::<T>(default_records.as_ref())?;
-            }
-            Err(e) => return Err(e),
-        };
-
-        info!("Found [{}].", file_path.display());
-        return Ok(());
+    fn dir(&self) -> PathBuf {
+        self.db_dir.clone()
     }
-    fn try_write_file<T: DatabaseRecord>(&self, data: impl serde::Serialize) -> Result<()> {
-        let file_path = &self.file_path(T::PARTITION);
+
+    fn try_write_storage(&self, data: impl serde::Serialize, path: impl AsRef<Path>) -> Result<()> {
         let serialized =
             serde_json::to_vec(&data).map_err(|e| Error::SerializationFailure(Box::new(e)))?;
 
-        if let Some(parent) = file_path.parent() {
-            create_dir_all(parent).map_err(|e| Error::IOCreateDirFailure {
-                path: parent.display().to_string(),
-                reason: e,
-            })?;
-        }
-
-        if file_path.is_dir() {
-            return Err(Error::DBCorrupt {
-                file_path: file_path.to_path_buf(),
-                reason: std::io::ErrorKind::IsADirectory {}.to_string(),
-            });
-        }
-
-        return fs::write(file_path, serialized).map_err(|e| Error::IOWriteFailure {
-            path: file_path.display().to_string(),
-            reason: e,
-        });
+        return try_write_file(&serialized, path);
     }
-    fn try_read_file<T: DatabaseRecord, O: for<'a> Deserialize<'a>>(&self) -> Result<O> {
-        let file_path = &self.file_path(T::PARTITION);
-        let file_data = fs::read_to_string(file_path).map_err(|e| match e.kind() {
-            std::io::ErrorKind::NotFound => Error::DBNotFound {
-                file_path: file_path.to_path_buf(),
-            },
-            _ => Error::DBCorrupt {
-                file_path: file_path.to_path_buf(),
-                reason: e.to_string(),
-            },
-        })?;
 
-        serde_json::from_str(&file_data).map_err(|e| {
-            let backup_path = file_path
-                .with_extension(format!("-FAILED-{}.bak", &chrono::Local::now().timestamp()));
+    fn try_read_storage<O: for<'a> Deserialize<'a>>(&self, path: impl AsRef<Path>) -> Result<O> {
+        let file_data = try_read_file(&path)?;
 
-            warn!(
-                "Failed deserialize file at [{}], creating a new backup at [{}], caused by: [{e}]",
-                file_path.display(),
-                backup_path.display()
-            );
-
-            if let Err(e) = fs::copy(file_path, &backup_path) {
-                return Error::IOCopyFailure {
-                    path_from: file_path.display().to_string(),
-                    path_destination: backup_path.display().to_string(),
-                    reason: e,
-                };
-            };
-
-            info!("Backup created successfully at [{}]", backup_path.display());
-
-            return Error::DBCorrupt {
-                file_path: file_path.to_path_buf(),
-                reason: Error::DeserializationFailure(Box::new(e)).to_string(),
-            };
-        })
+        serde_json::from_slice(&file_data).map_err(|e| backup_failed_parse(self, path, e))
     }
 }
 
 impl DatabaseTransaction for JsonDB {
     type TransactionDB = JsonDBTransaction;
 
-    fn try_rollback<T: DatabaseRecord>(&self, transaction: &Self::TransactionDB) -> Result<()> {
-        let records_before = transaction.records_before.get_all::<T>()?;
-        return self.try_write_file::<T>(records_before);
+    fn try_rollback_with_path<T: DatabaseRecord>(
+        &self,
+        transaction: &Self::TransactionDB,
+        path: impl AsRef<Path>,
+    ) -> Result<()> {
+        let records_before = transaction.records_before.get_all_with_path::<T>(&path)?;
+        return self.try_write_storage(records_before, path);
     }
 }
 
@@ -151,47 +81,22 @@ impl Database for JsonDBTransaction {
             records_after: memory_db,
         };
     }
-
-    fn dir(&self) -> PathBuf {
-        self.dir.clone()
-    }
-
-    fn file_path(&self, file_name: impl AsRef<Path>) -> PathBuf {
-        self.dir.join(file_name)
-    }
 }
 
 impl DatabaseOps for JsonDBTransaction {}
 
 impl DatabaseIO for JsonDBTransaction {
-    fn try_initialize_file<T: DatabaseRecord>(
-        &self,
-        default_records: impl AsRef<[T]>,
-    ) -> Result<()> {
-        match self.try_read_file::<T, Vec<T>>() {
-            Ok(_) => {}
-            Err(Error::DBNotFound { file_path }) => {
-                warn!(
-                    "Couldn't find [{}]. Trying to populate {}.",
-                    file_path.display(),
-                    Self::NAME
-                );
+    const EXTENSION: &str = "jsontransactdb";
 
-                self.records_after
-                    .try_initialize_file::<T>(default_records.as_ref())?;
-            }
-            Err(e) => return Err(e),
-        };
-
-        info!("Found [{}].", self.file_path(T::PARTITION).display());
-        return Ok(());
+    fn dir(&self) -> PathBuf {
+        self.dir.clone()
     }
 
-    fn try_write_file<T: DatabaseRecord>(&self, data: impl serde::Serialize) -> Result<()> {
-        self.records_after.try_write_file::<T>(data)
+    fn try_write_storage(&self, data: impl serde::Serialize, path: impl AsRef<Path>) -> Result<()> {
+        return self.records_after.try_write_storage(data, path);
     }
 
-    fn try_read_file<T: DatabaseRecord, O: for<'a> Deserialize<'a>>(&self) -> Result<O> {
-        self.records_after.try_read_file::<T, O>()
+    fn try_read_storage<O: for<'a> Deserialize<'a>>(&self, path: impl AsRef<Path>) -> Result<O> {
+        return self.records_after.try_read_storage::<O>(path);
     }
 }

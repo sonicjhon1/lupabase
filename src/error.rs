@@ -50,8 +50,8 @@ pub enum Error {
         reason: std::io::Error,
     },
 
-    #[display("Database operation failed: [{}], caused by: [{reason}]", std::path::absolute(partition).unwrap().display())]
-    DBOperationFailure { partition: String, reason: String },
+    #[display("Database operation failed: [{}], caused by: [{reason}]", std::path::absolute(path).unwrap().display())]
+    DBOperationFailure { path: String, reason: String },
 
     #[display("Database transaction commit failed: [{}], caused by: [{reason}]", std::path::absolute(file_path).unwrap().display())]
     DBTransactionCommitFailure { file_path: PathBuf, reason: String },
