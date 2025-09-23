@@ -70,7 +70,7 @@ pub fn try_populate_storage<D: Database, O: Serialize + for<'a> Deserialize<'a>>
 pub fn backup_failed_parse<D: Database>(
     database: &D,
     path: impl AsRef<Path>,
-    error: impl std::error::Error + 'static,
+    error: impl std::error::Error + Send + Sync + 'static,
 ) -> Error {
     let path = path.as_ref();
 

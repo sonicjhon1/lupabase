@@ -32,10 +32,10 @@ pub enum Error {
 
     // -- Serde
     #[display("Serialization failed, caused by: [{_0}]")]
-    SerializationFailure(Box<dyn std::error::Error>),
+    SerializationFailure(Box<dyn std::error::Error + Send + Sync>),
 
     #[display("Deserialization failed, caused by: [{_0}]")]
-    DeserializationFailure(Box<dyn std::error::Error>),
+    DeserializationFailure(Box<dyn std::error::Error + Send + Sync>),
 
     // -- DB
     #[display("Database file at [{}] not found.", std::path::absolute(file_path).unwrap().display())]
