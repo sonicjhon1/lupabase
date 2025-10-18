@@ -63,7 +63,7 @@ fn basics_cbor() -> Result<(), Box<dyn Error>> {
     init_tracing_for_tests();
 
     let working_dir = PathBuf::from(TMP_DIR).join("./cbor/");
-    fs::remove_dir_all(&working_dir)?;
+    let _ = fs::remove_dir_all(&working_dir);
 
     let db = CborDB::new(working_dir);
 
@@ -162,6 +162,45 @@ fn basics_cbor() -> Result<(), Box<dyn Error>> {
             assert_debug_snapshot!(
                 "Storage reinitialized",
                 db.try_read_storage::<Vec<TestRecord>>(db_file_path)?
+            );
+        }
+    }
+
+    {
+        let db_file_path = db.file_path("TestRecord");
+
+        let id = &mut 0_u64;
+        let default_record = TestRecord::new(id);
+
+        db.try_initialize_storage_with_path(default_record.clone(), &db_file_path)?;
+        assert_debug_snapshot!(
+            "Single Storage should contain the record",
+            db.try_read_storage::<TestRecord>(&db_file_path)?
+        );
+
+        {
+            let mut record = db.try_read_storage::<TestRecord>(&db_file_path)?;
+            record.data = String::from("Modified the data");
+            db.try_write_storage(record, &db_file_path)?;
+            assert_debug_snapshot!(
+                "Single Storage written",
+                db.try_read_storage::<TestRecord>(&db_file_path)?
+            );
+        }
+
+        {
+            let backup_path = db.try_backup_storage(&db_file_path, "Manual backup")?;
+            assert_debug_snapshot!(
+                "Single Storage backup",
+                db.try_read_storage::<TestRecord>(backup_path)?
+            );
+        }
+
+        {
+            db.try_initialize_storage_with_path(default_record, &db_file_path)?;
+            assert_debug_snapshot!(
+                "Single Storage reinitialized",
+                db.try_read_storage::<TestRecord>(db_file_path)?
             );
         }
     }
