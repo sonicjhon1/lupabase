@@ -1,0 +1,35 @@
+default_job = "nextest"
+env.CARGO_TERM_COLOR = "always"
+ignore = ["files/*", "tests/snapshots/*"]
+
+[jobs.check]
+command = ["cargo", "check"]
+need_stdout = false
+
+[jobs.check-all]
+command = ["cargo", "check", "--all-targets"]
+need_stdout = false
+
+[jobs.clippy]
+command = ["cargo", "clippy"]
+need_stdout = false
+
+[jobs.clippy-all]
+command = ["cargo", "clippy", "--all-targets"]
+need_stdout = false
+
+[jobs.test]
+command = ["cargo", "test"]
+need_stdout = true
+
+[jobs.nextest]
+command = [
+    "cargo", "nextest", "run", "--all-features",
+    "--hide-progress-bar", "--failure-output", "final"
+]
+need_stdout = true
+analyzer = "nextest"
+
+[keybindings]
+c = "job:clippy-all"
+p = "pause"
