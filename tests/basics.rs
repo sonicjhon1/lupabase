@@ -63,6 +63,11 @@ fn basics_cbor() -> Result<(), Box<dyn Error>> {
     basics_tester::<CborDB>(PathBuf::from(TMP_DIR).join("./cbor/"))
 }
 
+#[test]
+fn basics_json() -> Result<(), Box<dyn Error>> {
+    basics_tester::<JsonDB>(PathBuf::from(TMP_DIR).join("./json/"))
+}
+
 fn basics_tester<DB: Database>(working_dir: PathBuf) -> Result<(), Box<dyn Error>> {
     init_tracing_for_tests();
 
