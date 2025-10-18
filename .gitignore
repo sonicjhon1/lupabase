@@ -2,3 +2,4 @@
 rustc-ice*
 files/
 Cargo.lock
+tests/snapshots/*snap.new
