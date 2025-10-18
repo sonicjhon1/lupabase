@@ -6,7 +6,7 @@ use std::{
     fs::{self, create_dir_all},
     path::Path,
 };
-use tracing::{info, warn};
+use tracing::{debug, info, warn};
 
 pub fn check_is_all_new_records<R: DatabaseRecord>(
     current_records: &[R],
@@ -49,6 +49,8 @@ pub fn try_populate_storage<D: Database, O: Serialize + for<'a> Deserialize<'a>>
     default_data: O,
     path: impl AsRef<Path>,
 ) -> Result<()> {
+    debug!("Populating storage with: {}", std::any::type_name::<O>());
+
     match database.try_read_storage::<O>(&path) {
         Ok(_) => {}
         Err(Error::DBNotFound { file_path }) => {
