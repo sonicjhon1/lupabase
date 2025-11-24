@@ -47,7 +47,7 @@ fn basics_tester<DB: Database>() -> Result<(), Box<dyn Error>> {
 
             db.try_initialize_storage::<TestRecordPartitioned, Vec<TestRecordPartitioned>>(vec![])?;
             assert_debug_snapshot!(
-                format!("{db_name} initialized DB should be empty"),
+                format!("{db_name} initialized should be empty"),
                 db.get_all::<TestRecordPartitioned>()?
             );
         }
@@ -59,7 +59,7 @@ fn basics_tester<DB: Database>() -> Result<(), Box<dyn Error>> {
 
             db.insert(TestRecordPartitioned::new(id))?;
             assert_debug_snapshot!(
-                format!("{db_name} DB inserted"),
+                format!("{db_name} inserted"),
                 db.get_all::<TestRecordPartitioned>()?
             );
         }
@@ -72,7 +72,7 @@ fn basics_tester<DB: Database>() -> Result<(), Box<dyn Error>> {
                 TestRecordPartitioned::new(id),
             ])?;
             assert_debug_snapshot!(
-                format!("{db_name} DB inserted all"),
+                format!("{db_name} inserted all"),
                 db.get_all::<TestRecordPartitioned>()?
             );
         }
@@ -85,7 +85,7 @@ fn basics_tester<DB: Database>() -> Result<(), Box<dyn Error>> {
             record.data = String::from("Data has been updated!");
             db.update(record)?;
             assert_debug_snapshot!(
-                format!("{db_name} DB updated"),
+                format!("{db_name} updated"),
                 db.get_all::<TestRecordPartitioned>()?
             );
         }
@@ -103,7 +103,7 @@ fn basics_tester<DB: Database>() -> Result<(), Box<dyn Error>> {
             // Updating out of order should be fine!
             db.update_all([record_1, record_3, record_2])?;
             assert_debug_snapshot!(
-                format!("{db_name} DB updated all"),
+                format!("{db_name} updated all"),
                 db.get_all::<TestRecordPartitioned>()?
             );
         }
@@ -114,12 +114,12 @@ fn basics_tester<DB: Database>() -> Result<(), Box<dyn Error>> {
             let current_records = db.get_all::<TestRecordPartitioned>()?;
             db.replace_all::<TestRecordPartitioned>([])?;
             assert_debug_snapshot!(
-                format!("{db_name} DB replaced all empty"),
+                format!("{db_name} replaced all empty"),
                 db.get_all::<TestRecordPartitioned>()?
             );
             db.replace_all(current_records)?;
             assert_debug_snapshot!(
-                format!("{db_name} DB replaced all restored"),
+                format!("{db_name} replaced all restored"),
                 db.get_all::<TestRecordPartitioned>()?
             );
         }
@@ -129,7 +129,7 @@ fn basics_tester<DB: Database>() -> Result<(), Box<dyn Error>> {
 
             db.try_initialize_storage::<TestRecordPartitioned, Vec<TestRecordPartitioned>>(vec![])?;
             assert_debug_snapshot!(
-                format!("{db_name} DB reinitialized"),
+                format!("{db_name} reinitialized"),
                 db.get_all::<TestRecordPartitioned>()?
             );
         }
