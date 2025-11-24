@@ -12,7 +12,7 @@ pub fn init_tracing_for_tests() {
 
         let subscriber = fmt()
             .with_env_filter(env_filter)
-            .with_target(false)
+            .with_target(true)
             .compact();
 
         let _ = tracing::subscriber::set_global_default(subscriber.finish());
