@@ -23,14 +23,7 @@ command = ["cargo", "test"]
 need_stdout = true
 
 [jobs.nextest]
-command = [
-    "cargo",
-    "insta",
-    "test",
-    "--all-features",
-    "--unreferenced=auto",
-    "--test-runner=nextest",
-]
+command = ["cargo", "insta", "test", "--all-features", "--unreferenced=auto"]
 need_stdout = true
 analyzer = "nextest"
 
