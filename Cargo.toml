@@ -36,6 +36,7 @@ tracing = { version = "0.1", features = ["log"] }
 [dev-dependencies]
 insta = { version = "1", features = ["filters", "ron"] }
 serde = { version = "1.0.228", features = ["derive"] }
+tempfile = { version = "3", features = ["nightly"] }
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
 
 # This is required to avoid conflict with other `serde` users which may require an older version.

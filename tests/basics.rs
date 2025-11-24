@@ -3,10 +3,17 @@ pub mod tests_utils;
 use insta::assert_debug_snapshot;
 use lupabase::{prelude::*, record::DatabaseRecord};
 use serde::{Deserialize, Serialize};
-use std::{error::Error, fs, num::NonZero, path::PathBuf};
+use std::{error::Error, fmt::Display, fs, num::NonZero, path::PathBuf};
+use tempfile::TempDir;
 use tests_utils::init_tracing_for_tests;
 
-const TMP_DIR: &str = "./files/basics/";
+fn create_temp_working_dir(prefix: impl Display) -> (PathBuf, TempDir) {
+    let temp_dir =
+        TempDir::with_prefix(format!("basics-{prefix}-")).expect("Temporary directory creation failed");
+    let pathbuf = temp_dir.path().to_path_buf();
+
+    (pathbuf, temp_dir)
+}
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 struct TestRecord {
@@ -60,12 +67,20 @@ impl TestRecordPartitioned {
 
 #[test]
 fn basics_cbor() -> Result<(), Box<dyn Error>> {
-    basics_tester::<CborDB>(PathBuf::from(TMP_DIR).join("./cbor/"))
+    let (working_dir, _temp_dir_drop_guard) = create_temp_working_dir("cbor");
+
+    basics_tester::<CborDB>(working_dir)?;
+
+    Ok(())
 }
 
 #[test]
 fn basics_json() -> Result<(), Box<dyn Error>> {
-    basics_tester::<JsonDB>(PathBuf::from(TMP_DIR).join("./json/"))
+    let (working_dir, _temp_dir_drop_guard) = create_temp_working_dir("json");
+
+    basics_tester::<JsonDB>(working_dir)?;
+
+    Ok(())
 }
 
 fn basics_tester<DB: Database>(working_dir: PathBuf) -> Result<(), Box<dyn Error>> {
