@@ -94,15 +94,23 @@ fn basics_tester<DB: Database>() -> Result<(), Box<dyn Error>> {
     let db = DB::new(working_dir);
 
     {
-        db.try_initialize_storage::<TestRecordPartitioned, Vec<TestRecordPartitioned>>(vec![])?;
-        assert_debug_snapshot!(
-            format!("{db_name}: DB should be empty"),
-            db.get_all::<TestRecordPartitioned>()?
-        );
+        span_and_info!("Partitioned");
+
+        {
+            span_and_info!("Initialize");
+
+            db.try_initialize_storage::<TestRecordPartitioned, Vec<TestRecordPartitioned>>(vec![])?;
+            assert_debug_snapshot!(
+                format!("{db_name}: DB should be empty"),
+                db.get_all::<TestRecordPartitioned>()?
+            );
+        }
 
         let id = &mut 0_u64;
 
         {
+            span_and_info!("Operation", "Insert");
+
             db.insert(TestRecordPartitioned::new(id))?;
             assert_debug_snapshot!(
                 format!("{db_name}: DB inserted"),
@@ -111,6 +119,8 @@ fn basics_tester<DB: Database>() -> Result<(), Box<dyn Error>> {
         }
 
         {
+            span_and_info!("Operation", "Inserting all");
+
             db.insert_all([
                 TestRecordPartitioned::new(id),
                 TestRecordPartitioned::new(id),
@@ -122,6 +132,8 @@ fn basics_tester<DB: Database>() -> Result<(), Box<dyn Error>> {
         }
 
         {
+            span_and_info!("Operation", "Updating");
+
             let mut record = TestRecordPartitioned::new(id);
             db.insert(record.clone())?;
             record.data = String::from("Data has been updated!");
@@ -133,6 +145,8 @@ fn basics_tester<DB: Database>() -> Result<(), Box<dyn Error>> {
         }
 
         {
+            span_and_info!("Operation", "Updating all");
+
             let mut record_1 = TestRecordPartitioned::new(id);
             let mut record_2 = TestRecordPartitioned::new(id);
             let mut record_3 = TestRecordPartitioned::new(id);
@@ -149,6 +163,8 @@ fn basics_tester<DB: Database>() -> Result<(), Box<dyn Error>> {
         }
 
         {
+            span_and_info!("Operation", "Replacing all");
+
             let current_records = db.get_all::<TestRecordPartitioned>()?;
             db.replace_all::<TestRecordPartitioned>([])?;
             assert_debug_snapshot!(
@@ -163,6 +179,8 @@ fn basics_tester<DB: Database>() -> Result<(), Box<dyn Error>> {
         }
 
         {
+            span_and_info!("Re-Initialize");
+
             db.try_initialize_storage::<TestRecordPartitioned, Vec<TestRecordPartitioned>>(vec![])?;
             assert_debug_snapshot!(
                 format!("{db_name} DB reinitialized"),
@@ -172,17 +190,25 @@ fn basics_tester<DB: Database>() -> Result<(), Box<dyn Error>> {
     }
 
     {
+        span_and_info!("Collection");
+
         let db_file_path = db.file_path("TestRecords");
 
-        db.try_initialize_storage_with_path(vec![] as Vec<TestRecord>, &db_file_path)?;
-        assert_debug_snapshot!(
-            format!("{db_name} Storage should be empty"),
-            db.try_read_storage::<Vec<TestRecord>>(&db_file_path)?
-        );
+        {
+            span_and_info!("Initialize");
+
+            db.try_initialize_storage_with_path(vec![] as Vec<TestRecord>, &db_file_path)?;
+            assert_debug_snapshot!(
+                format!("{db_name} Storage should be empty"),
+                db.try_read_storage::<Vec<TestRecord>>(&db_file_path)?
+            );
+        }
 
         let id = &mut 0_u64;
 
         {
+            span_and_info!("Operation", "Read Write");
+
             let mut records = db.try_read_storage::<Vec<TestRecord>>(&db_file_path)?;
             records.push(TestRecord::new(id));
             records.push(TestRecord::new(id));
@@ -194,6 +220,8 @@ fn basics_tester<DB: Database>() -> Result<(), Box<dyn Error>> {
         }
 
         {
+            span_and_info!("Operation", "Backup");
+
             let backup_path = db.try_backup_storage(&db_file_path, "Manual backup")?;
             assert_debug_snapshot!(
                 format!("{db_name} Storage backup"),
@@ -202,6 +230,8 @@ fn basics_tester<DB: Database>() -> Result<(), Box<dyn Error>> {
         }
 
         {
+            span_and_info!("Re-Initialize");
+
             db.try_initialize_storage_with_path(vec![] as Vec<TestRecord>, &db_file_path)?;
             assert_debug_snapshot!(
                 format!("{db_name} Storage reinitialized"),
@@ -211,18 +241,26 @@ fn basics_tester<DB: Database>() -> Result<(), Box<dyn Error>> {
     }
 
     {
+        span_and_info!("Single");
+
         let db_file_path = db.file_path("TestRecord");
 
         let id = &mut 0_u64;
         let default_record = TestRecord::new(id);
 
-        db.try_initialize_storage_with_path(default_record.clone(), &db_file_path)?;
-        assert_debug_snapshot!(
-            format!("{db_name} Single Storage should contain the record"),
-            db.try_read_storage::<TestRecord>(&db_file_path)?
-        );
+        {
+            span_and_info!("Initialize");
+
+            db.try_initialize_storage_with_path(default_record.clone(), &db_file_path)?;
+            assert_debug_snapshot!(
+                format!("{db_name} Single Storage should contain the record"),
+                db.try_read_storage::<TestRecord>(&db_file_path)?
+            );
+        }
 
         {
+            span_and_info!("Operation", "Read Write");
+
             let mut record = db.try_read_storage::<TestRecord>(&db_file_path)?;
             record.data = String::from("Modified the data");
             db.try_write_storage(record, &db_file_path)?;
@@ -233,6 +271,8 @@ fn basics_tester<DB: Database>() -> Result<(), Box<dyn Error>> {
         }
 
         {
+            span_and_info!("Operation", "Backup");
+
             let backup_path = db.try_backup_storage(&db_file_path, "Manual backup")?;
             assert_debug_snapshot!(
                 format!("{db_name} Single Storage backup"),
@@ -241,6 +281,8 @@ fn basics_tester<DB: Database>() -> Result<(), Box<dyn Error>> {
         }
 
         {
+            span_and_info!("Re-Initialize");
+
             db.try_initialize_storage_with_path(default_record, &db_file_path)?;
             assert_debug_snapshot!(
                 format!("{db_name} Single Storage reinitialized"),
