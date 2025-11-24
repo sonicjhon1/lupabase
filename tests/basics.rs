@@ -108,7 +108,7 @@ fn basics_tester<DB: Database>() -> Result<(), Box<dyn Error>> {
 
             db.try_initialize_storage::<TestRecordPartitioned, Vec<TestRecordPartitioned>>(vec![])?;
             assert_debug_snapshot!(
-                format!("{db_name} DB should be empty"),
+                format!("{db_name} initialized DB should be empty"),
                 db.get_all::<TestRecordPartitioned>()?
             );
         }
