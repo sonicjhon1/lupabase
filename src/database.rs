@@ -248,8 +248,8 @@ pub trait DatabaseIO {
     ) -> Result<PathBuf> {
         let path = path.as_ref();
 
-        let backup_path = path.with_extension(format!(
-            "-{}-{}.bak",
+        let backup_path = path.with_added_extension(format!(
+            "{}-{}.bak",
             &chrono::Local::now().timestamp(),
             reason.as_ref()
         ));
