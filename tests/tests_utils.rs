@@ -1,4 +1,6 @@
-use std::sync::OnceLock;
+use std::{fmt::Display, path::PathBuf, sync::OnceLock};
+use tempfile::TempDir;
+use tracing::info;
 use tracing_subscriber::{EnvFilter, fmt};
 
 static TRACING_INIT: OnceLock<()> = OnceLock::new();
@@ -17,6 +19,16 @@ pub fn init_tracing_for_tests() {
 
         let _ = tracing::subscriber::set_global_default(subscriber.finish());
     });
+}
+
+pub fn create_temp_working_dir(prefix: impl Display) -> (PathBuf, TempDir) {
+    let temp_dir = TempDir::with_prefix(format!("basics-{prefix}-"))
+        .expect("Temporary directory creation failed");
+    let pathbuf = temp_dir.path().to_path_buf();
+
+    info!("Created temporary TempDir: [{}]", pathbuf.display());
+
+    (pathbuf, temp_dir)
 }
 
 #[macro_export]

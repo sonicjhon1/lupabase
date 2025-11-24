@@ -1,72 +1,11 @@
 pub mod tests_utils;
+pub mod tests_records;
 
 use insta::assert_debug_snapshot;
-use lupabase::{prelude::*, record::DatabaseRecord};
-use serde::{Deserialize, Serialize};
-use std::{error::Error, fmt::Display, fs, num::NonZero, path::PathBuf};
-use tempfile::TempDir;
-use tests_utils::init_tracing_for_tests;
-use tracing::info;
-
-fn create_temp_working_dir(prefix: impl Display) -> (PathBuf, TempDir) {
-    let temp_dir = TempDir::with_prefix(format!("basics-{prefix}-"))
-        .expect("Temporary directory creation failed");
-    let pathbuf = temp_dir.path().to_path_buf();
-
-    info!("Created temporary TempDir: [{}]", pathbuf.display());
-
-    (pathbuf, temp_dir)
-}
-
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-struct TestRecord {
-    pub id: NonZero<u64>,
-    pub data: String,
-}
-
-impl DatabaseRecord for TestRecord {
-    type Unique = NonZero<u64>;
-
-    fn unique_value(&self) -> Self::Unique { self.id }
-}
-
-impl TestRecord {
-    fn new(id: &mut u64) -> Self {
-        *id += 1;
-
-        Self {
-            id: NonZero::try_from(*id).expect("ID should not be Zero"),
-            data: format!("My data of {id}"),
-        }
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-struct TestRecordPartitioned {
-    pub id: NonZero<u64>,
-    pub data: String,
-}
-
-impl DatabaseRecord for TestRecordPartitioned {
-    type Unique = NonZero<u64>;
-
-    fn unique_value(&self) -> Self::Unique { self.id }
-}
-
-impl DatabaseRecordPartitioned for TestRecordPartitioned {
-    const PARTITION: &str = "TestRecordPartitioned";
-}
-
-impl TestRecordPartitioned {
-    fn new(id: &mut u64) -> Self {
-        *id += 1;
-
-        Self {
-            id: NonZero::try_from(*id).expect("ID should not be Zero"),
-            data: format!("My data of {id}"),
-        }
-    }
-}
+use lupabase::prelude::*;
+use std::{error::Error, fs};
+use tests_utils::*;
+use tests_records::*;
 
 #[test]
 fn basics_cbor() -> Result<(), Box<dyn Error>> {
