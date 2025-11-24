@@ -1,0 +1,6 @@
+behavior:
+  update: "always"
+
+test:
+  runner: "nextest"
+  auto_review: true
