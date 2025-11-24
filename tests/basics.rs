@@ -108,7 +108,7 @@ fn basics_tester<DB: Database>() -> Result<(), Box<dyn Error>> {
 
             db.try_initialize_storage::<TestRecordPartitioned, Vec<TestRecordPartitioned>>(vec![])?;
             assert_debug_snapshot!(
-                format!("{db_name}: DB should be empty"),
+                format!("{db_name} DB should be empty"),
                 db.get_all::<TestRecordPartitioned>()?
             );
         }
@@ -120,7 +120,7 @@ fn basics_tester<DB: Database>() -> Result<(), Box<dyn Error>> {
 
             db.insert(TestRecordPartitioned::new(id))?;
             assert_debug_snapshot!(
-                format!("{db_name}: DB inserted"),
+                format!("{db_name} DB inserted"),
                 db.get_all::<TestRecordPartitioned>()?
             );
         }
@@ -133,7 +133,7 @@ fn basics_tester<DB: Database>() -> Result<(), Box<dyn Error>> {
                 TestRecordPartitioned::new(id),
             ])?;
             assert_debug_snapshot!(
-                format!("{db_name}: DB inserted all"),
+                format!("{db_name} DB inserted all"),
                 db.get_all::<TestRecordPartitioned>()?
             );
         }
@@ -146,7 +146,7 @@ fn basics_tester<DB: Database>() -> Result<(), Box<dyn Error>> {
             record.data = String::from("Data has been updated!");
             db.update(record)?;
             assert_debug_snapshot!(
-                format!("{db_name}: DB updated"),
+                format!("{db_name} DB updated"),
                 db.get_all::<TestRecordPartitioned>()?
             );
         }
@@ -164,7 +164,7 @@ fn basics_tester<DB: Database>() -> Result<(), Box<dyn Error>> {
             // Updating out of order should be fine!
             db.update_all([record_1, record_3, record_2])?;
             assert_debug_snapshot!(
-                format!("{db_name}: DB updated all"),
+                format!("{db_name} DB updated all"),
                 db.get_all::<TestRecordPartitioned>()?
             );
         }
