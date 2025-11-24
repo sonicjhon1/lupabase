@@ -3,7 +3,7 @@ pub mod tests_utils;
 use insta::assert_debug_snapshot;
 use lupabase::{prelude::*, record::DatabaseRecord};
 use serde::{Deserialize, Serialize};
-use std::{any::type_name, error::Error, fmt::Display, fs, num::NonZero, path::PathBuf};
+use std::{error::Error, fmt::Display, fs, num::NonZero, path::PathBuf};
 use tempfile::TempDir;
 use tests_utils::init_tracing_for_tests;
 use tracing::info;
@@ -85,17 +85,13 @@ fn basics_json() -> Result<(), Box<dyn Error>> {
 fn basics_tester<DB: Database>() -> Result<(), Box<dyn Error>> {
     init_tracing_for_tests();
 
-    let (working_dir, _temp_dir_drop_guard) = create_temp_working_dir(
-        type_name::<DB>()
-            .split("::")
-            .last()
-            .expect("type_name shouldn't be empty"),
-    );
+    let db_name = DB::NAME;
+
+    let (working_dir, _temp_dir_drop_guard) = create_temp_working_dir(db_name);
 
     let _ = fs::remove_dir_all(&working_dir);
 
     let db = DB::new(working_dir);
-    let db_name = DB::NAME;
 
     {
         db.try_initialize_storage::<TestRecordPartitioned, Vec<TestRecordPartitioned>>(vec![])?;
