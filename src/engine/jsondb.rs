@@ -1,5 +1,5 @@
 use super::memorydb::MemoryDB;
-use crate::{Deserialize, Error, Result, prelude::*, utils::*};
+use crate::{Deserialize, Error, Result, Serialize, prelude::*, utils::*};
 use std::{
     fs::create_dir_all,
     path::{Path, PathBuf},
@@ -35,7 +35,7 @@ impl DatabaseIO for JsonDB {
 
     fn dir(&self) -> PathBuf { self.db_dir.clone() }
 
-    fn try_write_storage(&self, data: impl serde::Serialize, path: impl AsRef<Path>) -> Result<()> {
+    fn try_write_storage(&self, data: impl Serialize, path: impl AsRef<Path>) -> Result<()> {
         let serialized =
             serde_json::to_vec(&data).map_err(|e| Error::SerializationFailure(Box::new(e)))?;
 
@@ -90,7 +90,7 @@ impl DatabaseIO for JsonDBTransaction {
 
     fn dir(&self) -> PathBuf { self.dir.clone() }
 
-    fn try_write_storage(&self, data: impl serde::Serialize, path: impl AsRef<Path>) -> Result<()> {
+    fn try_write_storage(&self, data: impl Serialize, path: impl AsRef<Path>) -> Result<()> {
         return self.records_after.try_write_storage(data, path);
     }
 

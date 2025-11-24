@@ -10,4 +10,4 @@ pub mod record_utils;
 mod utils;
 
 pub use error::{Error, Result};
-pub(crate) use serde::{Deserialize, Serialize};
+pub(crate) use serde_core::{Deserialize, Serialize};

@@ -1,4 +1,4 @@
-use crate::{Deserialize, Error, Result, prelude::*};
+use crate::{Deserialize, Error, Result, Serialize, prelude::*};
 use hashbrown::HashMap;
 use parking_lot::RwLock;
 use std::{
@@ -32,7 +32,7 @@ impl DatabaseIO for MemoryDB {
 
     fn dir(&self) -> PathBuf { self.dir.clone() }
 
-    fn try_write_storage(&self, data: impl serde::Serialize, path: impl AsRef<Path>) -> Result<()> {
+    fn try_write_storage(&self, data: impl Serialize, path: impl AsRef<Path>) -> Result<()> {
         let serialized =
             minicbor_serde::to_vec(data).map_err(|e| Error::SerializationFailure(Box::new(e)))?;
 

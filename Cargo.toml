@@ -28,14 +28,19 @@ parking_lot = { version = "0.12", features = [
     "nightly",
     "hardware-lock-elision",
 ] }
-serde = { version = "1.0.228", features = ["derive"] }
+serde_core = { version = "1.0.228" }
 serde_json = { version = "1.0.145", optional = true }
 minicbor-serde = { version = "0.6", features = ["full"], optional = true }
 tracing = { version = "0.1", features = ["log"] }
 
 [dev-dependencies]
 insta = { version = "1", features = ["filters", "ron"] }
+serde = { version = "1.0.228", features = ["derive"] }
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+
+# This is required to avoid conflict with other `serde` users which may require an older version.
+[target.'cfg(any())'.dependencies]
+serde = { version = "1.0.228", default-features = false, optional = true }
 
 [lints.clippy]
 needless_return = "allow"
