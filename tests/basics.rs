@@ -82,6 +82,13 @@ fn basics_json() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+#[test]
+fn basics_memory() -> Result<(), Box<dyn Error>> {
+    basics_tester::<MemoryDB>()?;
+
+    Ok(())
+}
+
 fn basics_tester<DB: Database>() -> Result<(), Box<dyn Error>> {
     init_tracing_for_tests();
 
