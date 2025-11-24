@@ -32,6 +32,29 @@ impl DatabaseIO for MemoryDB {
 
     fn dir(&self) -> PathBuf { self.dir.clone() }
 
+    fn try_copy_storage(
+        &self,
+        source: impl AsRef<Path>,
+        destination: impl AsRef<Path>,
+    ) -> Result<()> {
+        let mut guard = self.store.write();
+
+        let content = guard
+            .get(source.as_ref())
+            .ok_or_else(|| {
+                return Error::DBNotFound {
+                    file_path: source.as_ref().to_path_buf(),
+                };
+            })?
+            .clone();
+
+        let _ = guard
+            .entry(destination.as_ref().to_path_buf())
+            .insert(content.clone());
+
+        Ok(())
+    }
+
     fn try_write_storage(&self, data: impl Serialize, path: impl AsRef<Path>) -> Result<()> {
         let serialized =
             minicbor_serde::to_vec(data).map_err(|e| Error::SerializationFailure(Box::new(e)))?;

@@ -35,6 +35,14 @@ impl DatabaseIO for JsonDB {
 
     fn dir(&self) -> PathBuf { self.db_dir.clone() }
 
+    fn try_copy_storage(
+        &self,
+        source: impl AsRef<Path>,
+        destination: impl AsRef<Path>,
+    ) -> Result<()> {
+        return try_copy_file(source, destination);
+    }
+
     fn try_write_storage(&self, data: impl Serialize, path: impl AsRef<Path>) -> Result<()> {
         let serialized =
             serde_json::to_vec(&data).map_err(|e| Error::SerializationFailure(Box::new(e)))?;
@@ -89,6 +97,14 @@ impl DatabaseIO for JsonDBTransaction {
     const EXTENSION: &str = "jsontransactdb";
 
     fn dir(&self) -> PathBuf { self.dir.clone() }
+
+    fn try_copy_storage(
+        &self,
+        source: impl AsRef<Path>,
+        destination: impl AsRef<Path>,
+    ) -> Result<()> {
+        return self.records_after.try_copy_storage(source, destination);
+    }
 
     fn try_write_storage(&self, data: impl Serialize, path: impl AsRef<Path>) -> Result<()> {
         return self.records_after.try_write_storage(data, path);

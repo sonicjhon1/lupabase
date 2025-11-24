@@ -94,6 +94,16 @@ pub fn backup_failed_parse<D: Database>(
     };
 }
 
+pub fn try_copy_file(source: impl AsRef<Path>, destination: impl AsRef<Path>) -> Result<()> {
+    return std::fs::copy(&source, &destination)
+        .map(|_| {})
+        .map_err(|e| Error::IOCopyFailure {
+            path_from: source.as_ref().display().to_string(),
+            path_destination: destination.as_ref().display().to_string(),
+            reason: e,
+        });
+}
+
 pub fn try_write_file(serialized_bytes: &[u8], path: impl AsRef<Path>) -> Result<()> {
     let path = path.as_ref();
 

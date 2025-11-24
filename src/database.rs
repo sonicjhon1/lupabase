@@ -237,6 +237,16 @@ pub trait DatabaseIO {
             .with_added_extension(Self::EXTENSION)
     }
 
+    /// Attemps to copy the storage to the destination
+    /// 
+    /// # Errors
+    /// - I/O
+    fn try_copy_storage(
+        &self,
+        source: impl AsRef<Path>,
+        destination: impl AsRef<Path>,
+    ) -> Result<()>;
+
     /// Attempts to backup the storage, returning the backed-up storage path
     ///
     /// # Errors
@@ -254,13 +264,7 @@ pub trait DatabaseIO {
             reason.as_ref()
         ));
 
-        if let Err(e) = std::fs::copy(path, &backup_path) {
-            return Err(Error::IOCopyFailure {
-                path_from: path.display().to_string(),
-                path_destination: backup_path.display().to_string(),
-                reason: e,
-            });
-        };
+        self.try_copy_storage(path, &backup_path)?;
 
         return Ok(backup_path);
     }
