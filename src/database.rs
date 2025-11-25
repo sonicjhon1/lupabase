@@ -238,7 +238,7 @@ pub trait DatabaseIO {
     }
 
     /// Attemps to copy the storage to the destination
-    /// 
+    ///
     /// # Errors
     /// - I/O
     fn try_copy_storage(
