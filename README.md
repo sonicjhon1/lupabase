@@ -1,30 +1,35 @@
 # lupabase
-Lupabase is a **blazingly fast** (work-in-progress) database engine, written entirely in Rust. It focuses on simplicity, portability with flexible storage backends.
+Lupabase is a **blazingly fast** (work-in-progress) database, written entirely in Rust. It focuses on simplicity, portability with flexible storage backends.
 
 ## Features
-- Two storage backends: `Database`
-    - MemoryDB: super fast, data is lost on restart
-    - JsonDB: persists to disk in human-readable json format
+- Multiple [`Database`](crate::prelude::Database) engines built-in: 
+    - [`MemoryDB`](crate::prelude::MemoryDB): In-memory, non-persistent storage. Extremely fast, backed by [`RwLock`](parking_lot::RwLock) & [`HashMap`](hashbrown::HashMap)
+    - [`JsonDB`](crate::prelude::JsonDB): Persists records to disk using the [`JSON`](https://docs.rs/serde_json) format
+    - [`CborDB`](crate::prelude::CborDB): Persists records to disk using the [`CBOR`](https://docs.rs/minicbor-serde) format
 
-- Record Utilities: `DatabaseRecordsUtils`
+- Flexible database record:
+  - [`DatabaseRecord`](crate::prelude::DatabaseRecord): A minimal, general-purpose record type for database operations that support custom paths. 
+    Suitable record that needs to be stored at custom file paths.
+  - [`DatabaseRecordPartitioned`](crate::prelude::DatabaseRecordPartitioned): A partitioned (named) record type that enables full feature support across all
+database operations. This includes everything supported by [`DatabaseRecord`](crate::prelude::DatabaseRecord). Recommended ✅
+
+- [`DatabaseRecordsUtils`](crate::record_utils::DatabaseRecordsUtils) for database records utilities: 
     - Filter records by unique key
     - Detect intersecting and non-intersecting records
     - Easily extract unique identifiers
 
-- Transactions: `DatabaseTransaction`
-    - ACID-like transaction system (Work in progress)
+- [`DatabaseTransaction`](crate::prelude::DatabaseTransaction) for ACID-like transactions: 
+    - Start transactions
+    - Commit stored transations
+    - Rollback transactions to a previous snapshot
 
-- Tightly integrated with Serde: `DatabaseRecord`
+- Raw database I/O with [`serde`](https://docs.rs/serde) through [`DatabaseIO`](crate::prelude::DatabaseIO):
+  - Store any type that implements [`Serialize`](serde_core::Serialize)
+  - Retrieve any type that implements [`Deserialize`](serde_core::Deserialize)
 
-### It is not
+## This is not
 - A standalone database server
 - A relational database
-
-## Roadmap
-- Variadic / multiple table function call
-- Concurrency-safe multi-threaded transactions
-- Tests
-
 
 ## Example/Usage
 ```rust 
@@ -86,6 +91,12 @@ if let Some(user) = users_db.find_by_unique(&1) {
     println!("Found user: {}", user.name);
 }
 ```
+
+## Roadmap
+- Variadic / multiple path (partition) function call
+- Concurrency-safe multi-threaded transactions
+- Improved tests and docs
+- Examples
 
 ## Status
 This project is **under active development and not yet production-ready**. Although it is in active use for my own projects, you should expect breaking changes if you use this library in the current status.
