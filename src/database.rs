@@ -305,20 +305,23 @@ pub trait DatabaseTransaction: Database {
     fn try_commit_with_path<T: DatabaseRecord>(
         &self,
         transaction: &Self::TransactionDB,
-        path: impl AsRef<Path>,
+        transaction_path: impl AsRef<Path>,
+        database_path: impl AsRef<Path>,
     ) -> Result<()> {
-        let records = transaction.get_all_with_path::<T>(&path)?;
-        match self.replace_all_with_path::<T>(records, &path) {
+        let records = transaction.get_all_with_path::<T>(&transaction_path)?;
+        match self.replace_all_with_path::<T>(records, &database_path) {
             Ok(()) => Ok(()),
             Err(e) => {
-                self.try_rollback_with_path::<T>(transaction, &path)
+                let database_path = database_path.as_ref().to_path_buf();
+
+                self.try_rollback_with_path::<T>(transaction, transaction_path, &database_path)
                     .map_err(|e| Error::DBTransactionRollbackFailure {
-                        file_path: path.as_ref().to_path_buf(),
+                        file_path: database_path.clone(),
                         reason: e.to_string(),
                     })?;
 
                 return Err(Error::DBTransactionCommitFailure {
-                    file_path: path.as_ref().to_path_buf(),
+                    file_path: database_path,
                     reason: e.to_string(),
                 });
             }
@@ -333,7 +336,11 @@ pub trait DatabaseTransaction: Database {
         &self,
         transaction: &Self::TransactionDB,
     ) -> Result<()> {
-        return self.try_commit_with_path::<T>(transaction, self.file_path(T::PARTITION));
+        return self.try_commit_with_path::<T>(
+            transaction,
+            transaction.file_path(T::PARTITION),
+            self.file_path(T::PARTITION),
+        );
     }
 
     /// Rolls back the current transaction in the given path
@@ -342,7 +349,8 @@ pub trait DatabaseTransaction: Database {
     fn try_rollback_with_path<T: DatabaseRecord>(
         &self,
         transaction: &Self::TransactionDB,
-        path: impl AsRef<Path>,
+        transaction_path: impl AsRef<Path>,
+        database_path: impl AsRef<Path>,
     ) -> Result<()>;
 
     /// Rolls back the current transaction
@@ -353,6 +361,10 @@ pub trait DatabaseTransaction: Database {
         &self,
         transaction: &Self::TransactionDB,
     ) -> Result<()> {
-        self.try_rollback_with_path::<T>(transaction, self.file_path(T::PARTITION))
+        self.try_rollback_with_path::<T>(
+            transaction,
+            transaction.file_path(T::PARTITION),
+            self.file_path(T::PARTITION),
+        )
     }
 }

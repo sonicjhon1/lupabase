@@ -63,10 +63,13 @@ impl DatabaseTransaction for CborDB {
     fn try_rollback_with_path<T: DatabaseRecord>(
         &self,
         transaction: &Self::TransactionDB,
-        path: impl AsRef<Path>,
+        transaction_path: impl AsRef<Path>,
+        database_path: impl AsRef<Path>,
     ) -> Result<()> {
-        let records_before = transaction.records_before.get_all_with_path::<T>(&path)?;
-        return self.try_write_storage(records_before, path);
+        let records_before = transaction
+            .records_before
+            .get_all_with_path::<T>(&transaction_path)?;
+        return self.try_write_storage(records_before, database_path);
     }
 }
 
