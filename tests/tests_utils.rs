@@ -21,8 +21,8 @@ pub fn init_tracing_for_tests() {
     });
 }
 
-pub fn create_temp_working_dir(prefix: impl Display) -> (PathBuf, TempDir) {
-    let temp_dir = TempDir::with_prefix(format!("basics-{prefix}-"))
+pub fn create_temp_working_dir(tester: impl Display, prefix: impl Display) -> (PathBuf, TempDir) {
+    let temp_dir = TempDir::with_prefix(format!("{tester}-{prefix}-"))
         .expect("Temporary directory creation failed");
     let pathbuf = temp_dir.path().to_path_buf();
 

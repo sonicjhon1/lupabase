@@ -1,11 +1,11 @@
-pub mod tests_utils;
 pub mod tests_records;
+pub mod tests_utils;
 
 use insta::assert_debug_snapshot;
 use lupabase::prelude::*;
 use std::{error::Error, fs};
-use tests_utils::*;
 use tests_records::*;
+use tests_utils::*;
 
 #[test]
 fn basics_cbor() -> Result<(), Box<dyn Error>> {
@@ -33,7 +33,7 @@ fn basics_tester<DB: Database>() -> Result<(), Box<dyn Error>> {
 
     let db_name = DB::NAME;
 
-    let (working_dir, _temp_dir_drop_guard) = create_temp_working_dir(db_name);
+    let (working_dir, _temp_dir_drop_guard) = create_temp_working_dir("basics", db_name);
 
     let _ = fs::remove_dir_all(&working_dir);
 
