@@ -1,0 +1,5 @@
+---
+source: tests/transactions.rs
+expression: "tx.try_read_storage::<Vec<TestRecord>>(&db_file_path)?"
+---
+[]

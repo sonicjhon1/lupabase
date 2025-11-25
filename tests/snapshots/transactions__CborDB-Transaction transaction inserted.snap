@@ -1,0 +1,10 @@
+---
+source: tests/transactions.rs
+expression: "tx.get_all::<TestRecordPartitioned>()?"
+---
+[
+    TestRecordPartitioned {
+        id: 1,
+        data: "My data of 1",
+    },
+]
