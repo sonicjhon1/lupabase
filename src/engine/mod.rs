@@ -8,7 +8,7 @@ pub mod jsondb;
 #[cfg(feature = "json")]
 pub use jsondb::*;
 
-#[cfg(feature = "cbor")]
+#[cfg(feature = "memory")]
 pub mod memorydb;
-#[cfg(feature = "cbor")]
+#[cfg(feature = "memory")]
 pub use memorydb::*;
