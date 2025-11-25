@@ -1,9 +1,15 @@
 # lupabase
+
+[![Docs](https://docs.rs/lupabase/badge.svg)](https://docs.rs/lupabase/latest/lupabase/)
+[![Crates.io](https://img.shields.io/crates/v/lupabase.svg)](https://crates.io/crates/lupabase)
+[![Downloads](https://img.shields.io/crates/d/lupabase.svg)](https://crates.io/crates/lupabase)
+[![License](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)](https://github.com/sonicjhon1/lupabase#license)
+
 Lupabase is a **blazingly fast** (work-in-progress) database, written entirely in Rust. It focuses on simplicity, portability with flexible storage backends.
 
 ## Features
 - Multiple [`Database`](crate::prelude::Database) engines built-in: 
-    - [`MemoryDB`](crate::prelude::MemoryDB): In-memory, non-persistent storage. Extremely fast, backed by [`RwLock`](parking_lot::RwLock) & [`HashMap`](hashbrown::HashMap)
+    - [`MemoryDB`](crate::prelude::MemoryDB): In-memory, non-persistent storage. Extremely fast, backed by [`RwLock`](parking_lot::RwLock) and [`HashMap`](hashbrown::HashMap)
     - [`JsonDB`](crate::prelude::JsonDB): Persists records to disk using the [`JSON`](https://docs.rs/serde_json) format
     - [`CborDB`](crate::prelude::CborDB): Persists records to disk using the [`CBOR`](https://docs.rs/minicbor-serde) format
 
@@ -102,5 +108,15 @@ if let Some(user) = users_db.find_by_unique(&1) {
 This project is **under active development and not yet production-ready**. Although it is in active use for my own projects, you should expect breaking changes if you use this library in the current status.
 
 ## License
-All source code is licensed under MIT OR Apache-2.0.
-All contributions are to be licensed as MIT OR Apache-2.0.
+All code in this repository is dual-licensed under either:
+
+* MIT License ([LICENSE-MIT](LICENSE-MIT) or [http://opensource.org/licenses/MIT](http://opensource.org/licenses/MIT))
+* Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0))
+
+at your option.
+
+
+### Your contributions
+
+Any contribution submitted for inclusion in the work by you, as defined in the Apache-2.0 license,
+shall be dual licensed as above, without any additional terms or conditions.
