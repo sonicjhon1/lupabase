@@ -1,5 +1,8 @@
 use crate::{Deserialize, Error, Result, Serialize, record::*, record_utils::*, utils::*};
-use std::path::{Path, PathBuf};
+use std::{
+    borrow::Borrow,
+    path::{Path, PathBuf},
+};
 
 /// Represents a database that provides operations for managing records,
 /// built upon the functionality provided by [`DatabaseOps`] and [`DatabaseIO`]
@@ -205,15 +208,13 @@ pub trait DatabaseOpsCustom: DatabaseIO {
     /// Attempts to initialize the provided default data into the given storage path
     ///
     /// See [`DatabaseOps::try_initialize_storage`] for details and the list of possible errors.
-    fn try_initialize_storage_with_path<O: Serialize + for<'a> Deserialize<'a>>(
+    fn try_initialize_storage_with_path<O: Serialize + for<'a> Deserialize<'a> + Borrow<O>>(
         &self,
         default_data: O,
         path: impl AsRef<Path>,
     ) -> Result<()>
     where
-        Self: Database + Sized, {
-        return try_populate_storage::<_, O>(self, default_data, path);
-    }
+        Self: Database + Sized;
 }
 
 /// Provides operations for database I/O
@@ -291,7 +292,7 @@ pub trait DatabaseTransaction: Database {
     /// The transactional database type
     ///
     /// This associated type represents a temporary, mutable snapshot of the database state.
-    type TransactionDB: Database;
+    type TransactionDB: Database + DatabaseTransactionOps;
 
     /// Begins a new transaction (usually is Infallible)
     ///
@@ -351,7 +352,11 @@ pub trait DatabaseTransaction: Database {
         transaction: &Self::TransactionDB,
         transaction_path: impl AsRef<Path>,
         database_path: impl AsRef<Path>,
-    ) -> Result<()>;
+    ) -> Result<()> {
+        let records_before = transaction.get_all_before_with_path::<T>(&transaction_path)?;
+
+        return self.try_write_storage(records_before, database_path);
+    }
 
     /// Rolls back the current transaction
     ///
@@ -366,5 +371,16 @@ pub trait DatabaseTransaction: Database {
             transaction.file_path(T::PARTITION),
             self.file_path(T::PARTITION),
         )
+    }
+}
+
+pub trait DatabaseTransactionOps: Database {
+    fn get_all_before_with_path<T: DatabaseRecord>(
+        &self,
+        transaction_path: impl AsRef<Path>,
+    ) -> Result<Vec<T>>;
+
+    fn get_all_before<T: DatabaseRecordPartitioned>(&self) -> Result<Vec<T>> {
+        self.get_all_before_with_path::<T>(self.file_path(T::PARTITION))
     }
 }

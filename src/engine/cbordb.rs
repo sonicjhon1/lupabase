@@ -1,6 +1,7 @@
 use super::memorydb::MemoryDB;
 use crate::{Deserialize, Error, Result, Serialize, prelude::*, utils::*};
 use std::{
+    borrow::Borrow,
     fs::create_dir_all,
     path::{Path, PathBuf},
 };
@@ -27,8 +28,19 @@ impl Database for CborDB {
     }
 }
 
-impl DatabaseOpsCustom for CborDB {}
 impl DatabaseOps for CborDB {}
+
+impl DatabaseOpsCustom for CborDB {
+    fn try_initialize_storage_with_path<O: Serialize + for<'a> Deserialize<'a> + Borrow<O>>(
+        &self,
+        default_data: O,
+        path: impl AsRef<Path>,
+    ) -> Result<()>
+    where
+        Self: Database + Sized, {
+        return try_populate_storage::<Self, O>(self, default_data, path);
+    }
+}
 
 impl DatabaseIO for CborDB {
     const EXTENSION: &str = "cbordb";
@@ -59,18 +71,6 @@ impl DatabaseIO for CborDB {
 
 impl DatabaseTransaction for CborDB {
     type TransactionDB = CborDBTransaction;
-
-    fn try_rollback_with_path<T: DatabaseRecord>(
-        &self,
-        transaction: &Self::TransactionDB,
-        transaction_path: impl AsRef<Path>,
-        database_path: impl AsRef<Path>,
-    ) -> Result<()> {
-        let records_before = transaction
-            .records_before
-            .get_all_with_path::<T>(&transaction_path)?;
-        return self.try_write_storage(records_before, database_path);
-    }
 }
 
 #[derive(Clone, Debug)]
@@ -84,17 +84,28 @@ impl Database for CborDBTransaction {
     const NAME: &str = "CborDB-Transaction";
 
     fn new(dir: impl AsRef<Path>) -> Self {
-        let memory_db = MemoryDB::new(&dir);
         return Self {
             dir: dir.as_ref().to_path_buf(),
-            records_before: memory_db.clone(),
-            records_after: memory_db,
+            records_before: MemoryDB::new(&dir),
+            records_after: MemoryDB::new(&dir),
         };
     }
 }
 
-impl DatabaseOpsCustom for CborDBTransaction {}
 impl DatabaseOps for CborDBTransaction {}
+
+impl DatabaseOpsCustom for CborDBTransaction {
+    fn try_initialize_storage_with_path<O: Serialize + for<'a> Deserialize<'a> + Borrow<O>>(
+        &self,
+        default_data: O,
+        path: impl AsRef<Path>,
+    ) -> Result<()>
+    where
+        Self: Database + Sized, {
+        try_populate_storage::<_, O>(&self.records_before, default_data.borrow(), &path)?;
+        try_populate_storage::<_, O>(&self.records_after, default_data, &path)
+    }
+}
 
 impl DatabaseIO for CborDBTransaction {
     const EXTENSION: &str = "cbortransactdb";
@@ -115,5 +126,15 @@ impl DatabaseIO for CborDBTransaction {
 
     fn try_read_storage<O: for<'a> Deserialize<'a>>(&self, path: impl AsRef<Path>) -> Result<O> {
         return self.records_after.try_read_storage::<O>(path);
+    }
+}
+
+impl DatabaseTransactionOps for CborDBTransaction {
+    fn get_all_before_with_path<T: DatabaseRecord>(
+        &self,
+        transaction_path: impl AsRef<Path>,
+    ) -> Result<Vec<T>> {
+        self.records_before
+            .get_all_with_path::<T>(&transaction_path)
     }
 }

@@ -3,8 +3,7 @@ use crate::{
     record_utils::DatabaseRecordsUtils,
 };
 use std::{
-    fs::{self, create_dir_all},
-    path::Path,
+    borrow::Borrow, fs::{self, create_dir_all}, path::Path
 };
 use tracing::{debug, info, warn};
 
@@ -46,7 +45,7 @@ pub fn check_is_all_existing_records<R: DatabaseRecord>(
 
 pub fn try_populate_storage<D: Database, O: Serialize + for<'a> Deserialize<'a>>(
     database: &D,
-    default_data: O,
+    default_data: impl Borrow<O>,
     path: impl AsRef<Path>,
 ) -> Result<()> {
     debug!("Populating storage with: {}", std::any::type_name::<O>());
@@ -60,7 +59,7 @@ pub fn try_populate_storage<D: Database, O: Serialize + for<'a> Deserialize<'a>>
                 D::NAME
             );
 
-            database.try_write_storage(default_data, &path)?;
+            database.try_write_storage(default_data.borrow(), &path)?;
         }
         Err(e) => return Err(e),
     };

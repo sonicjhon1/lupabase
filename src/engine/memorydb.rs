@@ -1,7 +1,8 @@
-use crate::{Deserialize, Error, Result, Serialize, prelude::*};
+use crate::{Deserialize, Error, Result, Serialize, prelude::*, utils::try_populate_storage};
 use hashbrown::HashMap;
 use parking_lot::RwLock;
 use std::{
+    borrow::Borrow,
     path::{Path, PathBuf},
     sync::Arc,
 };
@@ -24,8 +25,19 @@ impl Database for MemoryDB {
     }
 }
 
-impl DatabaseOpsCustom for MemoryDB {}
 impl DatabaseOps for MemoryDB {}
+
+impl DatabaseOpsCustom for MemoryDB {
+    fn try_initialize_storage_with_path<O: Serialize + for<'a> Deserialize<'a> + Borrow<O>>(
+        &self,
+        default_data: O,
+        path: impl AsRef<Path>,
+    ) -> Result<()>
+    where
+        Self: Database + Sized, {
+        return try_populate_storage::<Self, O>(self, default_data, path);
+    }
+}
 
 impl DatabaseIO for MemoryDB {
     const EXTENSION: &str = "memorydb";
