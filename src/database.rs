@@ -292,7 +292,7 @@ pub trait DatabaseTransaction: Database {
     /// The transactional database type
     ///
     /// This associated type represents a temporary, mutable snapshot of the database state.
-    type TransactionDB: Database + DatabaseTransactionOps;
+    type TransactionDB: Database + DatabaseTransactionOps + DatabaseTransactionIO;
 
     /// Begins a new transaction (usually is Infallible)
     ///
@@ -374,13 +374,22 @@ pub trait DatabaseTransaction: Database {
     }
 }
 
-pub trait DatabaseTransactionOps: Database {
+pub trait DatabaseTransactionOps: Database + DatabaseTransactionIO {
     fn get_all_before_with_path<T: DatabaseRecord>(
         &self,
         transaction_path: impl AsRef<Path>,
-    ) -> Result<Vec<T>>;
+    ) -> Result<Vec<T>> {
+        return self.try_read_storage_before::<Vec<T>>(transaction_path);
+    }
 
     fn get_all_before<T: DatabaseRecordPartitioned>(&self) -> Result<Vec<T>> {
         self.get_all_before_with_path::<T>(self.file_path(T::PARTITION))
     }
+}
+
+pub trait DatabaseTransactionIO: Database {
+    fn try_read_storage_before<O: for<'a> Deserialize<'a>>(
+        &self,
+        transaction_path: impl AsRef<Path>,
+    ) -> Result<O>;
 }

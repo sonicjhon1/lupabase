@@ -129,12 +129,13 @@ impl DatabaseIO for JsonDBTransaction {
     }
 }
 
-impl DatabaseTransactionOps for JsonDBTransaction {
-    fn get_all_before_with_path<T: DatabaseRecord>(
+impl DatabaseTransactionOps for JsonDBTransaction {}
+
+impl DatabaseTransactionIO for JsonDBTransaction {
+    fn try_read_storage_before<O: for<'a> Deserialize<'a>>(
         &self,
         transaction_path: impl AsRef<Path>,
-    ) -> Result<Vec<T>> {
-        self.records_before
-            .get_all_with_path::<T>(&transaction_path)
+    ) -> Result<O> {
+        self.records_before.try_read_storage::<O>(transaction_path)
     }
 }
