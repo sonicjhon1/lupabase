@@ -15,20 +15,20 @@ path = "src/lib.rs"
 
 [features]
 default = ["memory"]
+
 cbor = ["dep:minicbor-serde"]
 json = ["dep:serde_json"]
 memory = ["cbor"]
 full = ["cbor", "json", "memory"]
 
+nightly = ["hashbrown/nightly", "parking_lot/nightly"]
+
 [dependencies]
 chrono = { version = "0.4", features = ["clock", "serde"] }
 derive_more = { version = "2.0", features = ["from", "display", "error"] }
-hashbrown = { version = "0.16", features = ["nightly"] }
+hashbrown = { version = "0.16" }
 itertools = "0.14"
-parking_lot = { version = "0.12", features = [
-    "nightly",
-    "hardware-lock-elision",
-] }
+parking_lot = { version = "0.12", features = ["hardware-lock-elision"] }
 serde_core = { version = "1.0.228" }
 serde_json = { version = "1.0.145", optional = true }
 minicbor-serde = { version = "0.6", features = ["full"], optional = true }
