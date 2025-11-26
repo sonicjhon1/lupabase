@@ -1,15 +1,10 @@
 use std::path::PathBuf;
-
-use derive_more::{Display, Error, From};
+use derive_more::{Display, Error};
 
 pub type Result<T> = core::result::Result<T, Error>;
 
-#[derive(Debug, Error, From, Display)]
+#[derive(Debug, Error, Display)]
 pub enum Error {
-    #[from]
-    #[display("To be documented: [{reason}]")]
-    TBD { reason: String },
-
     // -- I/O
     #[display("Directory creation at [{path}] failed, caused by: [{reason}]")]
     IOCreateDirFailure {
@@ -43,12 +38,6 @@ pub enum Error {
 
     #[display("Database file at [{}] is corrupt, caused by: [{reason}]", std::path::absolute(file_path).unwrap().display())]
     DBCorrupt { file_path: PathBuf, reason: String },
-
-    #[display("Database file at [{}] is inaccessible, caused by: [{reason}]", std::path::absolute(file_path).unwrap().display())]
-    DBInaccessible {
-        file_path: PathBuf,
-        reason: std::io::Error,
-    },
 
     #[display("Database operation failed: [{}], caused by: [{reason}]", std::path::absolute(path).unwrap().display())]
     DBOperationFailure { path: String, reason: String },
