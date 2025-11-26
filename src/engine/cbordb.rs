@@ -35,9 +35,7 @@ impl DatabaseOpsCustom for CborDB {
         &self,
         default_data: O,
         path: impl AsRef<Path>,
-    ) -> Result<()>
-    where
-        Self: Database + Sized, {
+    ) -> Result<()> {
         return try_populate_storage::<Self, O>(self, default_data, path);
     }
 }
@@ -99,9 +97,7 @@ impl DatabaseOpsCustom for CborDBTransaction {
         &self,
         default_data: O,
         path: impl AsRef<Path>,
-    ) -> Result<()>
-    where
-        Self: Database + Sized, {
+    ) -> Result<()> {
         try_populate_storage::<_, O>(&self.records_before, default_data.borrow(), &path)?;
         try_populate_storage::<_, O>(&self.records_after, default_data, &path)
     }

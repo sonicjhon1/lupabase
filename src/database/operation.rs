@@ -78,9 +78,7 @@ pub trait DatabaseOps: DatabaseOpsCustom {
     >(
         &self,
         default_data: O,
-    ) -> Result<()>
-    where
-        Self: Database + Sized, {
+    ) -> Result<()> {
         return self
             .try_initialize_storage_with_path::<O>(default_data, self.file_path(T::PARTITION));
     }

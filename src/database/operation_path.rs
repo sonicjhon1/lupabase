@@ -118,7 +118,5 @@ pub trait DatabaseOpsCustom: DatabaseIO {
         &self,
         default_data: O,
         path: impl AsRef<Path>,
-    ) -> Result<()>
-    where
-        Self: Database + Sized;
+    ) -> Result<()>;
 }
