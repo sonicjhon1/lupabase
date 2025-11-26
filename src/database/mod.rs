@@ -2,6 +2,8 @@ mod operation;
 pub use operation::*;
 mod operation_path;
 pub use operation_path::*;
+mod operation_operatable;
+pub use operation_operatable::*;
 mod io;
 pub use io::*;
 
