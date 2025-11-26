@@ -1,0 +1,46 @@
+---
+source: tests/variadics.rs
+expression: "db.get_all_with_operatable::<Partition123>()?"
+---
+(
+    [
+        TestRecordPartitioned {
+            id: 1,
+            data: "My data of 1",
+        },
+        TestRecordPartitioned {
+            id: 3,
+            data: "My data of 3",
+        },
+    ],
+    (
+        [
+            TestRecordPartitioned2 {
+                id: 4,
+                data: "My data of 4",
+            },
+            TestRecordPartitioned2 {
+                id: 5,
+                data: "My data of 5",
+            },
+        ],
+        [
+            TestRecordPartitioned3 {
+                id: 2,
+                data: "My data of 2",
+            },
+            TestRecordPartitioned3 {
+                id: 6,
+                data: "My data of 6",
+            },
+            TestRecordPartitioned3 {
+                id: 7,
+                data: "My data of 7",
+            },
+            TestRecordPartitioned3 {
+                id: 8,
+                data: "My data of 8",
+            },
+        ],
+    ),
+)

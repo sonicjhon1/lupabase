@@ -1,0 +1,11 @@
+---
+source: tests/variadics.rs
+expression: "db.get_all_with_operatable::<Partition123>()?"
+---
+(
+    [],
+    (
+        [],
+        [],
+    ),
+)

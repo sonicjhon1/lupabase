@@ -1,0 +1,11 @@
+---
+source: tests/variadics.rs
+expression: "Partition123::get_all(&db)?"
+---
+(
+    [],
+    (
+        [],
+        [],
+    ),
+)
