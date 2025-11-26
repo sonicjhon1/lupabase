@@ -1,3 +1,5 @@
+pub mod utils;
+
 use crate::{Deserialize, Serialize};
 use std::{fmt::Debug, hash::Hash};
 

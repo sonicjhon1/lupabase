@@ -22,7 +22,7 @@ impl<T: DatabaseRecord> DatabaseRecordsUtils<T> for [T] {
     /// # Example
     /// ```rust
     /// # use lupabase::prelude::*;
-    /// # use lupabase::record_utils::*;
+    /// # use lupabase::record::utils::*;
     /// # use serde::{Deserialize, Serialize};
     /// #
     /// # #[derive(Serialize, Deserialize)]
@@ -45,7 +45,7 @@ impl<T: DatabaseRecord> DatabaseRecordsUtils<T> for [T] {
     /// # Example
     /// ```rust
     /// # use lupabase::prelude::*;
-    /// # use lupabase::record_utils::*;
+    /// # use lupabase::record::utils::*;
     /// # use serde::{Deserialize, Serialize};
     /// #
     /// # #[derive(Serialize, Deserialize)]
@@ -77,7 +77,7 @@ impl<T: DatabaseRecord> DatabaseRecordsUtils<T> for [T] {
     /// # Example
     /// ```rust
     /// # use lupabase::prelude::*;
-    /// # use lupabase::record_utils::*;
+    /// # use lupabase::record::utils::*;
     /// # use serde::{Deserialize, Serialize};
     /// #
     /// # #[derive(Serialize, Deserialize)]
@@ -109,7 +109,7 @@ impl<T: DatabaseRecord> DatabaseRecordsUtils<T> for [T] {
     /// # Example
     /// ```rust
     /// # use lupabase::prelude::*;
-    /// # use lupabase::record_utils::*;
+    /// # use lupabase::record::utils::*;
     /// # use serde::{Deserialize, Serialize};
     /// #
     /// # #[derive(Serialize, Deserialize)]
@@ -132,7 +132,7 @@ impl<T: DatabaseRecord> DatabaseRecordsUtils<T> for [T] {
     /// # Example
     /// ```rust
     /// # use lupabase::prelude::*;
-    /// # use lupabase::record_utils::*;
+    /// # use lupabase::record::utils::*;
     /// # use serde::{Deserialize, Serialize};
     /// #
     /// # #[derive(Serialize, Deserialize)]

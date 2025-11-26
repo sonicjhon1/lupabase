@@ -1,9 +1,12 @@
 use crate::{
-    Deserialize, Error, Result, Serialize, database::Database, record::*,
-    record_utils::DatabaseRecordsUtils,
+    Deserialize, Error, Result, Serialize,
+    database::Database,
+    record::{utils::DatabaseRecordsUtils, *},
 };
 use std::{
-    borrow::Borrow, fs::{self, create_dir_all}, path::Path
+    borrow::Borrow,
+    fs::{self, create_dir_all},
+    path::Path,
 };
 use tracing::{debug, info, warn};
 

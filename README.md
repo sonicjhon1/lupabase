@@ -19,7 +19,7 @@ Lupabase is a **blazingly fast** (work-in-progress) database, written entirely i
   - [`DatabaseRecordPartitioned`](crate::prelude::DatabaseRecordPartitioned): A partitioned (named) record type that enables full feature support across all
 database operations. This includes everything supported by [`DatabaseRecord`](crate::prelude::DatabaseRecord). Recommended ✅
 
-- [`DatabaseRecordsUtils`](crate::record_utils::DatabaseRecordsUtils) for database records utilities: 
+- [`DatabaseRecordsUtils`](crate::record::utils::DatabaseRecordsUtils) for database records utilities: 
     - Filter records by unique key
     - Detect intersecting and non-intersecting records
     - Easily extract unique identifiers
@@ -88,7 +88,7 @@ assert_eq!(users_custom_db.len(), 1);
 assert_eq!(users_custom_db[0].unique_value(), 2);
 
 // Additional helpers
-use lupabase::record_utils::*;
+use lupabase::record::utils::*;
 
 let uniques = users_db.as_uniques();
 println!("Unique IDs: {:?}", uniques);
