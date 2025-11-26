@@ -44,5 +44,8 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
 [target.'cfg(any())'.dependencies]
 serde = { version = "1.0.228", default-features = false, optional = true }
 
+[package.metadata.docs.rs]
+all-features = true
+
 [lints.clippy]
 needless_return = "allow"
