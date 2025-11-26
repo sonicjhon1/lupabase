@@ -1,4 +1,6 @@
+mod operatable;
 pub mod utils;
+pub use operatable::*;
 
 use crate::{Deserialize, Serialize};
 use std::{fmt::Debug, hash::Hash};
