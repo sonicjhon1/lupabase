@@ -1,5 +1,5 @@
-use std::path::PathBuf;
 use derive_more::{Display, Error};
+use std::path::PathBuf;
 
 pub type Result<T> = core::result::Result<T, Error>;
 

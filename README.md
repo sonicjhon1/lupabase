@@ -17,7 +17,7 @@ Lupabase is a **blazingly fast** (work-in-progress) database, written entirely i
   - [`DatabaseRecord`](crate::prelude::DatabaseRecord): A minimal, general-purpose record type for database operations that support custom paths. 
     Suitable record that needs to be stored at custom file paths.
   - [`DatabaseRecordPartitioned`](crate::prelude::DatabaseRecordPartitioned): A partitioned (named) record type that enables full feature support across all
-database operations. This includes everything supported by [`DatabaseRecord`](crate::prelude::DatabaseRecord). Recommended ✅
+    database operations. This includes everything supported by [`DatabaseRecord`](crate::prelude::DatabaseRecord). Recommended ✅
 
 - [`DatabaseRecordsUtils`](crate::record::utils::DatabaseRecordsUtils) for database records utilities: 
     - Filter records by unique key
