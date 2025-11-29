@@ -17,8 +17,8 @@ pub trait DatabaseOps: DatabaseOpsCustom {
     /// The record is wrapped into a slice and passed to [`DatabaseOps::insert_all`].
     ///
     /// See [`DatabaseOps::insert_all`] for details and the list of possible errors.
-    fn insert<T: DatabaseRecordPartitioned>(&self, updated_record: T) -> Result<()> {
-        return self.insert_with_path(updated_record, self.file_path(T::PARTITION));
+    fn insert<T: DatabaseRecordPartitioned>(&self, new_record: T) -> Result<()> {
+        return self.insert_with_path(new_record, self.file_path(T::PARTITION));
     }
 
     /// Inserts multiple [`DatabaseRecordPartitioned`] into storage
@@ -58,9 +58,9 @@ pub trait DatabaseOps: DatabaseOpsCustom {
     /// - Duplicate unique identifier is found among the updated records
     fn replace_all<T: DatabaseRecordPartitioned>(
         &self,
-        updated_records: impl IntoIterator<Item = T>,
+        replaced_records: impl IntoIterator<Item = T>,
     ) -> Result<()> {
-        return self.replace_all_with_path(updated_records, self.file_path(T::PARTITION));
+        return self.replace_all_with_path(replaced_records, self.file_path(T::PARTITION));
     }
 
     /// Attempts to initialize the provided default [`DatabaseRecordPartitioned`] into storage
