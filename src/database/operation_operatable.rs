@@ -1,5 +1,6 @@
 use crate::{Result, database::*, record::*};
 
+//TODO: Docs
 pub trait DatabaseOpsOperatable: DatabaseOps + Sized {
     fn get_all_with_operatable<R: DatabaseRecordOperatablePartitioned>(
         &self,

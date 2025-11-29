@@ -1,5 +1,6 @@
 use crate::{error::Result, prelude::DatabaseOps, record::DatabaseRecordPartitioned};
 
+//TODO: Docs
 pub trait DatabaseRecordOperatablePartitioned {
     type Collection;
 
