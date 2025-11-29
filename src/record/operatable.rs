@@ -13,6 +13,10 @@ pub trait DatabaseRecordOperatablePartitioned {
 
     fn update_all(db: &impl DatabaseOps, updated_records: Self::Collection) -> Result<()>;
 
+    fn upsert(db: &impl DatabaseOps, upserted_record: Self) -> Result<()>;
+
+    fn upsert_all(db: &impl DatabaseOps, upserted_records: Self::Collection) -> Result<()>;
+
     fn replace_all(db: &impl DatabaseOps, replaced_records: Self::Collection) -> Result<()>;
 
     fn try_initialize_storage(db: &impl DatabaseOps, default_data: Self::Collection) -> Result<()>;
@@ -40,6 +44,14 @@ where
 
     fn update_all(db: &impl DatabaseOps, updated_records: Self::Collection) -> Result<()> {
         return db.update_all(updated_records);
+    }
+
+    fn upsert(db: &impl DatabaseOps, upserted_record: Self) -> Result<()> {
+        return db.upsert(upserted_record);
+    }
+
+    fn upsert_all(db: &impl DatabaseOps, upserted_records: Self::Collection) -> Result<()> {
+        return db.upsert_all(upserted_records);
     }
 
     fn replace_all(db: &impl DatabaseOps, replaced_records: Self::Collection) -> Result<()> {
@@ -80,6 +92,16 @@ where
     fn update_all(db: &impl DatabaseOps, updated_records: Self::Collection) -> Result<()> {
         db.update_all(updated_records.0)?;
         return RN::update_all(db, updated_records.1);
+    }
+
+    fn upsert(db: &impl DatabaseOps, upserted_record: Self) -> Result<()> {
+        db.upsert(upserted_record.0)?;
+        return RN::upsert(db, upserted_record.1);
+    }
+
+    fn upsert_all(db: &impl DatabaseOps, upserted_records: Self::Collection) -> Result<()> {
+        db.upsert_all(upserted_records.0)?;
+        return RN::upsert_all(db, upserted_records.1);
     }
 
     fn replace_all(db: &impl DatabaseOps, replaced_records: Self::Collection) -> Result<()> {

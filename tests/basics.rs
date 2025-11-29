@@ -109,6 +109,39 @@ fn basics_tester<DB: Database>() -> Result<(), Box<dyn Error>> {
         }
 
         {
+            span_and_info!("Operation", "Upserting");
+
+            let mut record = TestRecordPartitioned::new(id);
+            db.upsert(record.clone())?;
+            record.data = String::from("Data has been upserted!");
+            db.upsert(record)?;
+            assert_debug_snapshot!(
+                format!("{db_name} upserted"),
+                db.get_all::<TestRecordPartitioned>()?
+            );
+        }
+
+        {
+            span_and_info!("Operation", "Upserting all");
+
+            let mut record_1 = TestRecordPartitioned::new(id);
+            let mut record_2 = TestRecordPartitioned::new(id);
+            let mut record_3 = TestRecordPartitioned::new(id);
+            // We will upsert record_3 later
+            db.upsert_all([record_1.clone(), record_2.clone()])?;
+            record_1.data = String::from("Data 1 has been upserted!");
+            record_2.data = String::from("Data 2 has been upserted!");
+            record_3.data = String::from("Data 3 has been upserted!");
+            // Upserting out of order should be fine!
+            // Upserted record_3
+            db.upsert_all([record_1, record_3, record_2])?;
+            assert_debug_snapshot!(
+                format!("{db_name} upserted all"),
+                db.get_all::<TestRecordPartitioned>()?
+            );
+        }
+
+        {
             span_and_info!("Operation", "Replacing all");
 
             let current_records = db.get_all::<TestRecordPartitioned>()?;

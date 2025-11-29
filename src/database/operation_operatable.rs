@@ -34,6 +34,21 @@ pub trait DatabaseOpsOperatable: DatabaseOps + Sized {
     ) -> Result<()> {
         return R::update_all(self, updated_records);
     }
+
+    fn upsert_with_operatable<R: DatabaseRecordOperatablePartitioned>(
+        &self,
+        upserted_record: R,
+    ) -> Result<()> {
+        return R::upsert(self, upserted_record);
+    }
+
+    fn upsert_all_with_operatable<R: DatabaseRecordOperatablePartitioned>(
+        &self,
+        upserted_records: R::Collection,
+    ) -> Result<()> {
+        return R::upsert_all(self, upserted_records);
+    }
+
     fn replace_all_with_operatable<R: DatabaseRecordOperatablePartitioned>(
         &self,
         replaced_records: R::Collection,

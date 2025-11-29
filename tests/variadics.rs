@@ -168,6 +168,62 @@ fn variadics_tester<DB: Database>() -> Result<(), Box<dyn Error>> {
         }
 
         {
+            span_and_info!("Operation", "Upserting");
+
+            let mut record = (
+                TestRecordPartitioned::new(id),
+                TestRecordPartitioned2::new(id),
+            );
+            db.upsert_with_operatable::<Partition12>(record.clone())?;
+            record.0.data = String::from("Data 1 has been upserted!");
+            record.1.data = String::from("Data 2 has been upserted!");
+            db.upsert_with_operatable::<Partition12>(record)?;
+            assert_debug_snapshot!(
+                format!("{db_name} upserted"),
+                db.get_all_with_operatable::<Partition123>()?
+            );
+        }
+
+        {
+            span_and_info!("Operation", "Upserting all");
+
+            let mut record_1 = vec![
+                TestRecordPartitioned::new(id),
+                TestRecordPartitioned::new(id),
+                TestRecordPartitioned::new(id),
+            ];
+            let mut record_2 = vec![
+                TestRecordPartitioned2::new(id),
+                TestRecordPartitioned2::new(id),
+                TestRecordPartitioned2::new(id),
+            ];
+            let mut record_3 = vec![
+                TestRecordPartitioned3::new(id),
+                TestRecordPartitioned3::new(id),
+                TestRecordPartitioned3::new(id),
+            ];
+            // We will upsert record_3 later
+            db.upsert_all_with_operatable::<Partition12>((record_1.clone(), record_2.clone()))?;
+            record_1[0].data = String::from("Data 1 has been updated!");
+            record_2[1].data = String::from("Data 2 has been updated!");
+            record_3[2].data = String::from("Data 3 has been updated!");
+            // Updating out of order should be fine!
+            // Upserted record_3
+            db.upsert_all_with_operatable::<Partition132>((record_1, (record_3, record_2)))?;
+            assert_debug_snapshot!(
+                format!("{db_name} upserted all"),
+                db.get_all_with_operatable::<Partition123>()?
+            );
+
+            let (r1, (r2, r3)) = db.get_all_with_operatable::<Partition123>()?;
+            let (rr1, (rr3, rr2)) = db.get_all_with_operatable::<Partition132>()?;
+
+            assert_eq!(r1, rr1);
+            assert_eq!(r2, rr2);
+            assert_eq!(r3, rr3);
+        }
+
+        {
             span_and_info!("Operation", "Replacing all");
 
             let current_records = db.get_all_with_operatable::<Partition123>()?;

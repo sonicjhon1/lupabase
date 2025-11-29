@@ -28,6 +28,22 @@ expression: "db.get_all_with_operatable::<Partition123>()?"
             id: 13,
             data: "My data of 13",
         },
+        TestRecordPartitioned {
+            id: 20,
+            data: "Data 1 has been upserted!",
+        },
+        TestRecordPartitioned {
+            id: 22,
+            data: "Data 1 has been updated!",
+        },
+        TestRecordPartitioned {
+            id: 23,
+            data: "My data of 23",
+        },
+        TestRecordPartitioned {
+            id: 24,
+            data: "My data of 24",
+        },
     ],
     (
         [
@@ -54,6 +70,22 @@ expression: "db.get_all_with_operatable::<Partition123>()?"
             TestRecordPartitioned2 {
                 id: 16,
                 data: "My data of 16",
+            },
+            TestRecordPartitioned2 {
+                id: 21,
+                data: "Data 2 has been upserted!",
+            },
+            TestRecordPartitioned2 {
+                id: 25,
+                data: "My data of 25",
+            },
+            TestRecordPartitioned2 {
+                id: 26,
+                data: "Data 2 has been updated!",
+            },
+            TestRecordPartitioned2 {
+                id: 27,
+                data: "My data of 27",
             },
         ],
         [
@@ -83,6 +115,18 @@ expression: "db.get_all_with_operatable::<Partition123>()?"
             },
             TestRecordPartitioned3 {
                 id: 19,
+                data: "Data 3 has been updated!",
+            },
+            TestRecordPartitioned3 {
+                id: 28,
+                data: "My data of 28",
+            },
+            TestRecordPartitioned3 {
+                id: 29,
+                data: "My data of 29",
+            },
+            TestRecordPartitioned3 {
+                id: 30,
                 data: "Data 3 has been updated!",
             },
         ],

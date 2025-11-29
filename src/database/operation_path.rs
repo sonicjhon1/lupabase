@@ -84,6 +84,38 @@ pub trait DatabaseOpsCustom: DatabaseIO {
         return self.try_write_storage(records, path);
     }
 
+    /// Updates or inserts a single [`DatabaseRecord`] into the given path
+    ///
+    /// See [`DatabaseOps::upsert`] for details and the list of possible errors.
+    fn upsert_with_path<T: DatabaseRecord>(
+        &self,
+        upserted_record: T,
+        path: impl AsRef<Path>,
+    ) -> Result<()> {
+        return self.upsert_all_with_path([upserted_record], path);
+    }
+
+    /// Updates or inserts multiple [`DatabaseRecord`] into the given path
+    ///
+    /// See [`DatabaseOps::upsert_all`] for details and the list of possible errors.
+    fn upsert_all_with_path<T: DatabaseRecord>(
+        &self,
+        upserted_records: impl IntoIterator<Item = T>,
+        path: impl AsRef<Path>,
+    ) -> Result<()> {
+        let mut records = self.get_all_with_path(&path)?;
+
+        for upserted_record in upserted_records.into_iter() {
+            if let Some(record) = records.find_by_unique_mut(&upserted_record.unique_value()) {
+                *record = upserted_record;
+            } else {
+                records.push(upserted_record);
+            }
+        }
+
+        return self.try_write_storage(records, path);
+    }
+
     /// Replace all [`DatabaseRecord`] into the given path with the provided [`DatabaseRecord`]
     ///
     /// See [`DatabaseOps::replace_all`] for details and the list of possible errors.

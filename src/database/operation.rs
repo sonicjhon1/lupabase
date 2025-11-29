@@ -51,6 +51,26 @@ pub trait DatabaseOps: DatabaseOpsCustom {
         return self.update_all_with_path(updated_records, self.file_path(T::PARTITION));
     }
 
+    /// Updates or inserts a single [`DatabaseRecordPartitioned`] into storage.
+    /// The record is wrapped into a slice and passed to [`DatabaseOps::upsert_all`].
+    ///
+    /// See [`DatabaseOps::upsert_all`] for details and the list of possible errors.
+    fn upsert<T: DatabaseRecordPartitioned>(&self, upserted_record: T) -> Result<()> {
+        return self.upsert_with_path(upserted_record, self.file_path(T::PARTITION));
+    }
+
+    /// Updates or inserts multiple [`DatabaseRecordPartitioned`] into storage
+    ///
+    /// # Errors
+    /// - I/O
+    /// - Duplicate unique identifier is found among the upserted records
+    fn upsert_all<T: DatabaseRecordPartitioned>(
+        &self,
+        upserted_records: impl IntoIterator<Item = T>,
+    ) -> Result<()> {
+        return self.upsert_all_with_path(upserted_records, self.file_path(T::PARTITION));
+    }
+
     /// Replace all [`DatabaseRecordPartitioned`] in storage with the provided [`DatabaseRecordPartitioned`]
     ///
     /// # Errors
