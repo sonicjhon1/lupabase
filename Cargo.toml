@@ -30,7 +30,7 @@ hashbrown = { version = "0.16" }
 itertools = "0.14"
 parking_lot = { version = "0.12", features = ["hardware-lock-elision"] }
 serde_core = { version = "1.0.228" }
-serde_json = { version = "1.0.145", optional = true }
+serde_json = { version = "1.0.149", optional = true }
 minicbor-serde = { version = "0.6", features = ["full"], optional = true }
 tracing = { version = "0.1", features = ["log"] }
 
