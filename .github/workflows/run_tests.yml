@@ -1,0 +1,25 @@
+name: Run tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup toolchains
+        uses: ./.github/workflows/setup-toolchains
+        with:
+          test: "true"
+
+      - name: Run tests
+        run: cargo nextest run --all-features --no-capture --workspace

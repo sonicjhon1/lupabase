@@ -1,0 +1,48 @@
+name: Setup toolchains
+description: Install toolchains
+
+inputs:
+  build:
+    description: "Includes build components: 'true'"
+    required: false
+  cargo-edit:
+    description: "Includes cargo-edit: 'true'"
+    required: false
+  test:
+    description: "Includes test components: 'true'"
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - name: Setup rust toolchain
+      uses: dtolnay/rust-toolchain@nightly
+
+    - name: Setup cranelift
+      if: ${{ inputs.build == 'true' || inputs.test == 'true' }}
+      shell: bash
+      run: |
+        rustup component add rustc-codegen-cranelift
+
+    - name: Setup binstall
+      if: ${{ inputs.build == 'true' || inputs.test == 'true' }}
+      uses: taiki-e/install-action@v2
+      with:
+        tool: cargo-binstall
+
+    - name: Setup wild
+      if: ${{ inputs.build == 'true' || inputs.test == 'true' }}
+      shell: bash
+      run: |
+        cargo binstall wild-linker
+
+    - name: Setup cargo-edit
+      if: ${{ inputs.cargo-edit == 'true' }}
+      shell: bash
+      run: cargo install cargo-edit
+
+    - name: Setup nextest
+      if: ${{ inputs.test == 'true' }}
+      uses: taiki-e/install-action@v2
+      with:
+        tool: cargo-nextest
