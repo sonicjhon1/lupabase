@@ -4,7 +4,8 @@ updates:
   - package-ecosystem: "cargo"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: cron
+      cronjob: "0 0 * * *"
 
     allow:
       - dependency-type: all
@@ -23,7 +24,8 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: cron
+      cronjob: "0 0 * * *"
 
     allow:
       - dependency-type: all
