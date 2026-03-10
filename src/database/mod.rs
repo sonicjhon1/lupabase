@@ -6,6 +6,8 @@ mod operation_operatable;
 pub use operation_operatable::*;
 mod io;
 pub use io::*;
+mod bytes;
+pub use bytes::*;
 
 use std::path::Path;
 

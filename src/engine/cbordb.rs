@@ -54,16 +54,25 @@ impl DatabaseIO for CborDB {
     }
 
     fn try_write_storage(&self, data: impl Serialize, path: impl AsRef<Path>) -> Result<()> {
-        let serialized =
-            minicbor_serde::to_vec(&data).map_err(|e| Error::SerializationFailure(Box::new(e)))?;
+        let serialized = Self::try_as_bytes(data)?;
 
         return try_write_file(&serialized, path);
     }
 
     fn try_read_storage<O: for<'a> Deserialize<'a>>(&self, path: impl AsRef<Path>) -> Result<O> {
-        let file_data = try_read_file(&path)?;
+        let bytes = try_read_file(&path)?;
 
-        minicbor_serde::from_slice(&file_data).map_err(|e| backup_failed_parse(self, path, e))
+        return Self::try_from_bytes(&bytes).map_err(|e| backup_failed_parse(self, path, e));
+    }
+}
+
+impl DatabaseBytes for CborDB {
+    fn try_as_bytes(data: impl Serialize) -> Result<Vec<u8>> {
+        minicbor_serde::to_vec(&data).map_err(|e| Error::SerializationFailure(Box::new(e)))
+    }
+
+    fn try_from_bytes<'de, O: Deserialize<'de>>(bytes: &'de [u8]) -> Result<O> {
+        minicbor_serde::from_slice(bytes).map_err(|e| Error::DeserializationFailure(Box::new(e)))
     }
 }
 

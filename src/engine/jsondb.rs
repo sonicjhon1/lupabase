@@ -54,16 +54,25 @@ impl DatabaseIO for JsonDB {
     }
 
     fn try_write_storage(&self, data: impl Serialize, path: impl AsRef<Path>) -> Result<()> {
-        let serialized =
-            serde_json::to_vec(&data).map_err(|e| Error::SerializationFailure(Box::new(e)))?;
+        let serialized = Self::try_as_bytes(data)?;
 
         return try_write_file(&serialized, path);
     }
 
     fn try_read_storage<O: for<'a> Deserialize<'a>>(&self, path: impl AsRef<Path>) -> Result<O> {
-        let file_data = try_read_file(&path)?;
+        let bytes = try_read_file(&path)?;
 
-        serde_json::from_slice(&file_data).map_err(|e| backup_failed_parse(self, path, e))
+        return Self::try_from_bytes(&bytes).map_err(|e| backup_failed_parse(self, path, e));
+    }
+}
+
+impl DatabaseBytes for JsonDB {
+    fn try_as_bytes(data: impl Serialize) -> Result<Vec<u8>> {
+        serde_json::to_vec(&data).map_err(|e| Error::SerializationFailure(Box::new(e)))
+    }
+
+    fn try_from_bytes<'de, O: Deserialize<'de>>(bytes: &'de [u8]) -> Result<O> {
+        serde_json::from_slice(bytes).map_err(|e| Error::DeserializationFailure(Box::new(e)))
     }
 }
 

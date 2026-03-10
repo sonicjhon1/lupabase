@@ -66,8 +66,7 @@ impl DatabaseIO for MemoryDB {
     }
 
     fn try_write_storage(&self, data: impl Serialize, path: impl AsRef<Path>) -> Result<()> {
-        let serialized =
-            minicbor_serde::to_vec(data).map_err(|e| Error::SerializationFailure(Box::new(e)))?;
+        let serialized = Self::try_as_bytes(data)?;
 
         let mut guard = self.store.write();
         let _ = guard.insert(path.as_ref().to_path_buf(), serialized);
@@ -78,11 +77,11 @@ impl DatabaseIO for MemoryDB {
         let path = path.as_ref();
 
         let guard = self.store.read();
-        let data = guard.get(path).ok_or_else(|| Error::DBNotFound {
+        let bytes = guard.get(path).ok_or_else(|| Error::DBNotFound {
             file_path: path.to_path_buf(),
         })?;
 
-        minicbor_serde::from_slice(data).map_err(|e| {
+        Self::try_from_bytes(bytes).map_err(|e| {
             warn!(
                 "Failed deserialize partition at [{}], caused by: [{e}]",
                 path.display()
@@ -93,5 +92,15 @@ impl DatabaseIO for MemoryDB {
                 reason: Error::DeserializationFailure(Box::new(e)).to_string(),
             };
         })
+    }
+}
+
+impl DatabaseBytes for MemoryDB {
+    fn try_as_bytes(data: impl Serialize) -> Result<Vec<u8>> {
+        minicbor_serde::to_vec(&data).map_err(|e| Error::SerializationFailure(Box::new(e)))
+    }
+
+    fn try_from_bytes<'de, O: Deserialize<'de>>(bytes: &'de [u8]) -> Result<O> {
+        minicbor_serde::from_slice(bytes).map_err(|e| Error::DeserializationFailure(Box::new(e)))
     }
 }
