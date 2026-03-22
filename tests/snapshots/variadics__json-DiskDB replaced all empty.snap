@@ -1,6 +1,6 @@
 ---
 source: tests/variadics.rs
-expression: "Partition123::get_all(&db)?"
+expression: "db.get_all_with_operatable::<Partition123>()?"
 ---
 (
     [],

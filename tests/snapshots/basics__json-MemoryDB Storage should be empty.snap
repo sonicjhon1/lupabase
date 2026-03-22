@@ -1,0 +1,5 @@
+---
+source: tests/basics.rs
+expression: "db.try_read_storage::<Vec<TestRecord>>(&db_file_path)?"
+---
+[]

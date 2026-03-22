@@ -9,21 +9,22 @@ use tests_utils::*;
 
 #[test]
 fn variadics_cbor() -> Result<(), Box<dyn Error>> {
-    variadics_tester::<CborDB>()?;
+    variadics_tester::<DiskDB<CborSerde>>()?;
 
     Ok(())
 }
 
 #[test]
 fn variadics_json() -> Result<(), Box<dyn Error>> {
-    variadics_tester::<JsonDB>()?;
+    variadics_tester::<DiskDB<JsonSerde>>()?;
 
     Ok(())
 }
 
 #[test]
 fn variadics_memory() -> Result<(), Box<dyn Error>> {
-    variadics_tester::<MemoryDB>()?;
+    variadics_tester::<MemoryDB<CborSerde>>()?;
+    variadics_tester::<MemoryDB<JsonSerde>>()?;
 
     Ok(())
 }
@@ -51,7 +52,7 @@ type Partition12 = (TestRecordPartitioned, TestRecordPartitioned2);
 fn variadics_tester<DB: Database>() -> Result<(), Box<dyn Error>> {
     init_tracing_for_tests();
 
-    let db_name = DB::NAME;
+    let db_name = &format!("{}-{}", DB::SERDE_FORMAT, DB::NAME);
 
     let (working_dir, _temp_dir_drop_guard) = create_temp_working_dir("variadics", db_name);
 

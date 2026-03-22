@@ -1,1 +1,1 @@
-pub use crate::{database::*, engine::*, record::*, transaction::*};
+pub use crate::{database::*, engine::*, record::*, serdes::*, transaction::*};

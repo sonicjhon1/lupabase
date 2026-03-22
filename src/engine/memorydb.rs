@@ -3,31 +3,35 @@ use hashbrown::HashMap;
 use parking_lot::RwLock;
 use std::{
     borrow::Borrow,
+    marker::PhantomData,
     path::{Path, PathBuf},
     sync::Arc,
 };
 use tracing::warn;
 
 #[derive(Clone, Debug)]
-pub struct MemoryDB {
+pub struct MemoryDB<S> {
     dir: PathBuf,
     store: Arc<RwLock<HashMap<PathBuf, Vec<u8>>>>,
+    _serde_marker: PhantomData<S>,
 }
 
-impl Database for MemoryDB {
+impl<S: BytesSerde> Database for MemoryDB<S> {
     const NAME: &str = "MemoryDB";
+    const SERDE_FORMAT: &str = S::FORMAT;
 
     fn new(dir: impl AsRef<Path>) -> Self {
         return Self {
             dir: dir.as_ref().to_path_buf(),
             store: Default::default(),
+            _serde_marker: PhantomData,
         };
     }
 }
 
-impl DatabaseOps for MemoryDB {}
+impl<S: BytesSerde> DatabaseOps for MemoryDB<S> {}
 
-impl DatabaseOpsCustom for MemoryDB {
+impl<S: BytesSerde> DatabaseOpsCustom for MemoryDB<S> {
     fn try_initialize_storage_with_path<O: Serialize + for<'a> Deserialize<'a> + Borrow<O>>(
         &self,
         default_data: O,
@@ -37,8 +41,8 @@ impl DatabaseOpsCustom for MemoryDB {
     }
 }
 
-impl DatabaseIO for MemoryDB {
-    const EXTENSION: &str = "memorydb";
+impl<S: BytesSerde> DatabaseIO for MemoryDB<S> {
+    const EXTENSION: &str = S::FORMAT;
 
     fn dir(&self) -> PathBuf { self.dir.clone() }
 
@@ -66,7 +70,7 @@ impl DatabaseIO for MemoryDB {
     }
 
     fn try_write_storage(&self, data: impl Serialize, path: impl AsRef<Path>) -> Result<()> {
-        let serialized = Self::try_as_bytes(data)?;
+        let serialized = S::try_serialize_as_bytes(data)?;
 
         let mut guard = self.store.write();
         let _ = guard.insert(path.as_ref().to_path_buf(), serialized);
@@ -81,7 +85,7 @@ impl DatabaseIO for MemoryDB {
             file_path: path.to_path_buf(),
         })?;
 
-        Self::try_from_bytes(bytes).map_err(|e| {
+        S::try_deserialize_from_bytes(bytes).map_err(|e| {
             warn!(
                 "Failed deserialize partition at [{}], caused by: [{e}]",
                 path.display()
@@ -95,12 +99,6 @@ impl DatabaseIO for MemoryDB {
     }
 }
 
-impl DatabaseBytes for MemoryDB {
-    fn try_as_bytes(data: impl Serialize) -> Result<Vec<u8>> {
-        minicbor_serde::to_vec(&data).map_err(|e| Error::SerializationFailure(Box::new(e)))
-    }
-
-    fn try_from_bytes<'de, O: Deserialize<'de>>(bytes: &'de [u8]) -> Result<O> {
-        minicbor_serde::from_slice(bytes).map_err(|e| Error::DeserializationFailure(Box::new(e)))
-    }
+impl<S: BytesSerde> DatabaseTransaction for MemoryDB<S> {
+    type TransactionDB = TransactionDB<S>;
 }

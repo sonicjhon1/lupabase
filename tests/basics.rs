@@ -9,21 +9,22 @@ use tests_utils::*;
 
 #[test]
 fn basics_cbor() -> Result<(), Box<dyn Error>> {
-    basics_tester::<CborDB>()?;
+    basics_tester::<DiskDB<CborSerde>>()?;
 
     Ok(())
 }
 
 #[test]
 fn basics_json() -> Result<(), Box<dyn Error>> {
-    basics_tester::<JsonDB>()?;
+    basics_tester::<DiskDB<JsonSerde>>()?;
 
     Ok(())
 }
 
 #[test]
 fn basics_memory() -> Result<(), Box<dyn Error>> {
-    basics_tester::<MemoryDB>()?;
+    basics_tester::<MemoryDB<CborSerde>>()?;
+    basics_tester::<MemoryDB<JsonSerde>>()?;
 
     Ok(())
 }
@@ -31,7 +32,7 @@ fn basics_memory() -> Result<(), Box<dyn Error>> {
 fn basics_tester<DB: Database>() -> Result<(), Box<dyn Error>> {
     init_tracing_for_tests();
 
-    let db_name = DB::NAME;
+    let db_name = &format!("{}-{}", DB::SERDE_FORMAT, DB::NAME);
 
     let (working_dir, _temp_dir_drop_guard) = create_temp_working_dir("basics", db_name);
 

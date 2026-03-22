@@ -9,31 +9,35 @@ use tests_utils::*;
 
 #[test]
 fn transactions_cbor() -> Result<(), Box<dyn Error>> {
-    transactions_tester::<CborDB>()?;
+    transactions_tester::<DiskDB<CborSerde>>()?;
 
     Ok(())
 }
 
 #[test]
 fn transactions_json() -> Result<(), Box<dyn Error>> {
-    transactions_tester::<JsonDB>()?;
+    transactions_tester::<DiskDB<JsonSerde>>()?;
 
     Ok(())
 }
 
-//TODO: MemoryDB transactions
-// #[test]
-// fn transactions_memory() -> Result<(), Box<dyn Error>> {
-//     transactions_tester::<MemoryDB>()?;
+#[test]
+fn transactions_memory() -> Result<(), Box<dyn Error>> {
+    transactions_tester::<MemoryDB<CborSerde>>()?;
+    transactions_tester::<MemoryDB<JsonSerde>>()?;
 
-//     Ok(())
-// }
+    Ok(())
+}
 
 fn transactions_tester<DB: DatabaseTransaction>() -> Result<(), Box<dyn Error>> {
     init_tracing_for_tests();
 
-    let db_name = DB::NAME;
-    let tx_name = DB::TransactionDB::NAME;
+    let db_name = &format!("{}-{}", DB::SERDE_FORMAT, DB::NAME);
+    let tx_name = &format!(
+        "{}-{}",
+        DB::TransactionDB::SERDE_FORMAT,
+        DB::TransactionDB::NAME
+    );
 
     let (working_dir, _temp_dir_drop_guard) = create_temp_working_dir("transactions", db_name);
 
