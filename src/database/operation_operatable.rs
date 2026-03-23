@@ -1,13 +1,17 @@
 use crate::{Result, database::*, record::*};
 
-//TODO: Docs
+/// Provides a composable variadic database operations for [`DatabaseOps`]
+///
+/// See [`DatabaseOps`] for details and the list of possible errors.
 pub trait DatabaseOpsOperatable: DatabaseOps + Sized {
+    /// See [`DatabaseOps::get_all`] for details and the list of possible errors.
     fn get_all_with_operatable<R: DatabaseRecordOperatablePartitioned>(
         &self,
     ) -> Result<R::Collection> {
         return R::get_all(self);
     }
 
+    /// See [`DatabaseOps::insert`] for details and the list of possible errors.
     fn insert_with_operatable<R: DatabaseRecordOperatablePartitioned>(
         &self,
         new_record: R,
@@ -15,6 +19,7 @@ pub trait DatabaseOpsOperatable: DatabaseOps + Sized {
         return R::insert(self, new_record);
     }
 
+    /// See [`DatabaseOps::insert_all`] for details and the list of possible errors.
     fn insert_all_with_operatable<R: DatabaseRecordOperatablePartitioned>(
         &self,
         new_records: R::Collection,
@@ -22,6 +27,7 @@ pub trait DatabaseOpsOperatable: DatabaseOps + Sized {
         return R::insert_all(self, new_records);
     }
 
+    /// See [`DatabaseOps::update`] for details and the list of possible errors.
     fn update_with_operatable<R: DatabaseRecordOperatablePartitioned>(
         &self,
         updated_record: R,
@@ -29,6 +35,7 @@ pub trait DatabaseOpsOperatable: DatabaseOps + Sized {
         return R::update(self, updated_record);
     }
 
+    /// See [`DatabaseOps::update_all`] for details and the list of possible errors.
     fn update_all_with_operatable<R: DatabaseRecordOperatablePartitioned>(
         &self,
         updated_records: R::Collection,
@@ -36,6 +43,7 @@ pub trait DatabaseOpsOperatable: DatabaseOps + Sized {
         return R::update_all(self, updated_records);
     }
 
+    /// See [`DatabaseOps::upsert`] for details and the list of possible errors.
     fn upsert_with_operatable<R: DatabaseRecordOperatablePartitioned>(
         &self,
         upserted_record: R,
@@ -43,6 +51,7 @@ pub trait DatabaseOpsOperatable: DatabaseOps + Sized {
         return R::upsert(self, upserted_record);
     }
 
+    /// See [`DatabaseOps::upsert_all`] for details and the list of possible errors.
     fn upsert_all_with_operatable<R: DatabaseRecordOperatablePartitioned>(
         &self,
         upserted_records: R::Collection,
@@ -50,6 +59,7 @@ pub trait DatabaseOpsOperatable: DatabaseOps + Sized {
         return R::upsert_all(self, upserted_records);
     }
 
+    /// See [`DatabaseOps::replace_all`] for details and the list of possible errors.
     fn replace_all_with_operatable<R: DatabaseRecordOperatablePartitioned>(
         &self,
         replaced_records: R::Collection,
@@ -57,6 +67,7 @@ pub trait DatabaseOpsOperatable: DatabaseOps + Sized {
         return R::replace_all(self, replaced_records);
     }
 
+    /// See [`DatabaseOps::try_initialize_storage`] for details and the list of possible errors.
     fn try_initialize_storage_with_operatable<R: DatabaseRecordOperatablePartitioned>(
         &self,
         default_data: R::Collection,

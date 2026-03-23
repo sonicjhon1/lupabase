@@ -1,25 +1,37 @@
 use crate::{error::Result, prelude::DatabaseOps, record::DatabaseRecordPartitioned};
 
-//TODO: Docs
+/// Provides a composable variadic database operation for [`DatabaseRecordPartitioned`] with [`DatabaseOps`].
+///
+/// This trait acts as a thin abstraction over [`DatabaseOps`].
 pub trait DatabaseRecordOperatablePartitioned {
+    /// A collection of records for this partition
     type Collection;
 
+    /// See [`DatabaseOps::get_all`] for details and the list of possible errors.
     fn get_all(db: &impl DatabaseOps) -> Result<Self::Collection>;
 
+    /// See [`DatabaseOps::insert`] for details and the list of possible errors.
     fn insert(db: &impl DatabaseOps, new_record: Self) -> Result<()>;
 
+    /// See [`DatabaseOps::insert_all`] for details and the list of possible errors.
     fn insert_all(db: &impl DatabaseOps, new_records: Self::Collection) -> Result<()>;
 
+    /// See [`DatabaseOps::update`] for details and the list of possible errors.
     fn update(db: &impl DatabaseOps, updated_record: Self) -> Result<()>;
 
+    /// See [`DatabaseOps::update_all`] for details and the list of possible errors.
     fn update_all(db: &impl DatabaseOps, updated_records: Self::Collection) -> Result<()>;
 
+    /// See [`DatabaseOps::upsert`] for details and the list of possible errors.
     fn upsert(db: &impl DatabaseOps, upserted_record: Self) -> Result<()>;
 
+    /// See [`DatabaseOps::upsert_all`] for details and the list of possible errors.
     fn upsert_all(db: &impl DatabaseOps, upserted_records: Self::Collection) -> Result<()>;
 
+    /// See [`DatabaseOps::replace_all`] for details and the list of possible errors.
     fn replace_all(db: &impl DatabaseOps, replaced_records: Self::Collection) -> Result<()>;
 
+    /// See [`DatabaseOps::try_initialize_storage`] for details and the list of possible errors.
     fn try_initialize_storage(db: &impl DatabaseOps, default_data: Self::Collection) -> Result<()>;
 }
 
