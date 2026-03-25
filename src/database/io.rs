@@ -13,13 +13,30 @@ pub trait DatabaseIO {
     ///
     /// This method attempts to convert the relative directory returned by [`DatabaseIO::dir`] into an absolute path.
     /// If obtaining an absolute path fails, it falls back to returning the original directory.
-    fn dir_absolute(&self) -> PathBuf { std::path::absolute(self.dir()).unwrap_or(self.dir()) }
+    fn dir_absolute(&self) -> PathBuf {
+        let dir = self.dir();
+
+        return std::path::absolute(&dir).unwrap_or(dir);
+    }
 
     /// Returns a storage path with the provided file name
     fn file_path(&self, file_name: impl AsRef<Path>) -> PathBuf {
         self.dir()
             .join(file_name)
             .with_added_extension(Self::EXTENSION)
+    }
+
+    /// Returns the absolute storage path with the provided file name    
+    ///
+    /// This method attempts to convert the relative path into an absolute path.
+    /// If obtaining an absolute path fails, it falls back to returning the original path.
+    fn file_path_absolute(&self, file_name: impl AsRef<Path>) -> PathBuf {
+        let path = self
+            .dir()
+            .join(file_name)
+            .with_added_extension(Self::EXTENSION);
+
+        return std::path::absolute(&path).unwrap_or(path);
     }
 
     /// Attemps to copy the storage to the destination
