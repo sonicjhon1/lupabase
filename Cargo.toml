@@ -18,7 +18,7 @@ default = ["memory"]
 
 cbor = ["dep:minicbor-serde"]
 json = ["dep:serde_json"]
-memory = ["cbor"]
+memory = []
 full = ["cbor", "json", "memory"]
 
 nightly = ["hashbrown/nightly", "parking_lot/nightly"]
