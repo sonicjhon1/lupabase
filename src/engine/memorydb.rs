@@ -55,16 +55,12 @@ impl<S: BytesSerde> DatabaseIO for MemoryDB<S> {
 
         let content = guard
             .get(source.as_ref())
-            .ok_or_else(|| {
-                return Error::DBNotFound {
-                    file_path: source.as_ref().to_path_buf(),
-                };
-            })?
-            .clone();
+            .cloned()
+            .ok_or_else(|| Error::DBNotFound {
+                file_path: source.as_ref().to_path_buf(),
+            })?;
 
-        let _ = guard
-            .entry(destination.as_ref().to_path_buf())
-            .insert(content.clone());
+        let _ = guard.insert(destination.as_ref().to_path_buf(), content);
 
         Ok(())
     }
