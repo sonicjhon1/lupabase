@@ -25,6 +25,7 @@ pub use cbor::*;
 mod cbor {
     use super::*;
 
+    #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
     pub struct CborSerde;
 
     impl BytesSerde for CborSerde {
@@ -48,6 +49,7 @@ pub use json::*;
 mod json {
     use super::*;
 
+    #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
     pub struct JsonSerde;
 
     impl BytesSerde for JsonSerde {

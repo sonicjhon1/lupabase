@@ -6,7 +6,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-#[derive(Clone, Debug)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub struct DiskDB<S> {
     db_dir: PathBuf,
     _serde_marker: PhantomData<S>,
