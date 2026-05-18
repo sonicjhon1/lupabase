@@ -1,4 +1,4 @@
-use crate::{Deserialize, Error, Result, Serialize};
+use crate::{Deserialize, Result, Serialize};
 
 /// Provides bytes Serialization / Deserialization
 pub trait BytesSerde {
@@ -24,6 +24,7 @@ pub use cbor::*;
 #[cfg(feature = "cbor")]
 mod cbor {
     use super::*;
+    use crate::Error;
 
     #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
     pub struct CborSerde;
@@ -48,6 +49,7 @@ pub use json::*;
 #[cfg(feature = "json")]
 mod json {
     use super::*;
+    use crate::Error;
 
     #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
     pub struct JsonSerde;
