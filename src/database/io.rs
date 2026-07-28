@@ -62,7 +62,7 @@ pub trait DatabaseIO {
 
         let backup_path = path.with_added_extension(format!(
             "{}-{}.bak",
-            &chrono::Local::now().timestamp(),
+            chrono::Local::now().timestamp(),
             reason.as_ref()
         ));
 
