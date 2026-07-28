@@ -3,28 +3,66 @@ pub mod tests_utils;
 
 use insta::assert_debug_snapshot;
 use lupabase::prelude::*;
-use std::{error::Error, fs};
+use std::{error::Error, path::PathBuf};
 use tests_records::*;
 use tests_utils::*;
 
 #[test]
-fn variadics_cbor() -> Result<(), Box<dyn Error>> {
-    variadics_tester::<DiskDB<CborSerde>>()?;
+fn variadics_arcticmap() -> Result<(), Box<dyn Error>> {
+    #[cfg(feature = "arcticmap")]
+    {
+        #[cfg(feature = "cbor")]
+        variadics_tester(|_| ArcticMapDB::<CborSerde>::new())?;
+        #[cfg(feature = "json")]
+        variadics_tester(|_| ArcticMapDB::<JsonSerde>::new())?;
+        #[cfg(feature = "postcard")]
+        variadics_tester(|_| ArcticMapDB::<PostcardSerde>::new())?;
+    }
 
     Ok(())
 }
 
 #[test]
-fn variadics_json() -> Result<(), Box<dyn Error>> {
-    variadics_tester::<DiskDB<JsonSerde>>()?;
+fn variadics_dashmap() -> Result<(), Box<dyn Error>> {
+    #[cfg(feature = "dashmap")]
+    {
+        #[cfg(feature = "cbor")]
+        variadics_tester(|_| DashMapDB::<CborSerde>::new())?;
+        #[cfg(feature = "json")]
+        variadics_tester(|_| DashMapDB::<JsonSerde>::new())?;
+        #[cfg(feature = "postcard")]
+        variadics_tester(|_| DashMapDB::<PostcardSerde>::new())?;
+    }
 
     Ok(())
 }
 
 #[test]
-fn variadics_memory() -> Result<(), Box<dyn Error>> {
-    variadics_tester::<MemoryDB<CborSerde>>()?;
-    variadics_tester::<MemoryDB<JsonSerde>>()?;
+fn variadics_disk() -> Result<(), Box<dyn Error>> {
+    #[cfg(feature = "disk")]
+    {
+        #[cfg(feature = "cbor")]
+        variadics_tester(DiskDB::<CborSerde>::new)?;
+        #[cfg(feature = "json")]
+        variadics_tester(DiskDB::<JsonSerde>::new)?;
+        #[cfg(feature = "postcard")]
+        variadics_tester(DiskDB::<PostcardSerde>::new)?;
+    }
+
+    Ok(())
+}
+
+#[test]
+fn variadics_hashmap() -> Result<(), Box<dyn Error>> {
+    #[cfg(feature = "hashmap")]
+    {
+        #[cfg(feature = "cbor")]
+        variadics_tester(|_| HashMapDB::<CborSerde>::new())?;
+        #[cfg(feature = "json")]
+        variadics_tester(|_| HashMapDB::<JsonSerde>::new())?;
+        #[cfg(feature = "postcard")]
+        variadics_tester(|_| HashMapDB::<PostcardSerde>::new())?;
+    }
 
     Ok(())
 }
@@ -49,16 +87,16 @@ type Partition132 = (
 
 type Partition12 = (TestRecordPartitioned, TestRecordPartitioned2);
 
-fn variadics_tester<DB: Database>() -> Result<(), Box<dyn Error>> {
+fn variadics_tester<DB: Database + OperationOperatablePartitioned>(
+    db_fn: impl FnOnce(PathBuf) -> DB,
+) -> Result<(), Box<dyn Error>> {
     init_tracing_for_tests();
 
-    let db_name = &format!("{}-{}", DB::SERDE_FORMAT, DB::NAME);
+    let (working_dir, _working_dir_guard) = create_temp_working_dir("variadics");
+    let _ = std::fs::remove_dir_all(&working_dir);
+    let db = db_fn(working_dir);
 
-    let (working_dir, _temp_dir_drop_guard) = create_temp_working_dir("variadics", db_name);
-
-    let _ = fs::remove_dir_all(&working_dir);
-
-    let db = DB::new(working_dir);
+    let db_name = &format!("{}-{}", DB::SERDE_FORMAT_EXTENSION, DB::NAME);
 
     {
         span_and_info!("Partitioned");

@@ -14,22 +14,38 @@ categories = ["database-implementations"]
 path = "src/lib.rs"
 
 [features]
-default = ["memory"]
+default = ["hashmap", "disk", "transaction"]
+full = [
+    "cbor",
+    "json",
+    "postcard",
+    "arcticmap",
+    "dashmap",
+    "disk",
+    "hashmap",
+    "transaction",
+]
+nightly = ["hashbrown/nightly", "parking_lot/nightly"]
 
+# Formats
 cbor = ["dep:minicbor-serde"]
 json = ["dep:serde_json"]
 postcard = ["dep:postcard2"]
-memory = []
-full = ["cbor", "json", "postcard", "memory"]
 
-nightly = ["hashbrown/nightly", "parking_lot/nightly"]
+# Engines
+arcticmap = ["dep:arctic-map"]
+dashmap = ["dep:dashmap"]
+disk = []
+hashmap = ["dep:hashbrown", "dep:parking_lot"]
+transaction = ["hashmap"]
 
 [dependencies]
 chrono = { version = "0.4", features = ["clock", "serde"] }
 derive_more = { version = "2.1", features = ["display", "error"] }
-hashbrown = { version = "0.17" }
 itertools = "0.15"
-parking_lot = { version = "0.12", features = ["hardware-lock-elision"] }
+parking_lot = { version = "0.12", features = [
+    "hardware-lock-elision",
+], optional = true }
 serde_core = { version = "1.0.229" }
 tracing = { version = "0.1", features = ["log"] }
 
@@ -37,6 +53,11 @@ tracing = { version = "0.1", features = ["log"] }
 postcard2 = { version = "0.2", features = ["alloc", "std"], optional = true }
 serde_json = { version = "1.0.151", optional = true }
 minicbor-serde = { version = "0.7", features = ["full"], optional = true }
+
+# Engines
+arctic-map = { version = "0.1", optional = true }
+dashmap = { version = "6.2", features = ["inline"], optional = true }
+hashbrown = { version = "0.17", optional = true }
 
 [dev-dependencies]
 insta = { version = "1", features = ["filters", "ron"] }

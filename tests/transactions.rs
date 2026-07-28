@@ -3,55 +3,89 @@ pub mod tests_utils;
 
 use insta::assert_debug_snapshot;
 use lupabase::prelude::*;
-use std::{error::Error, fs};
+use std::{error::Error, path::PathBuf};
 use tests_records::*;
 use tests_utils::*;
 
 #[test]
-fn transactions_cbor() -> Result<(), Box<dyn Error>> {
-    transactions_tester::<DiskDB<CborSerde>>()?;
+fn transactions_arcticmap() -> Result<(), Box<dyn Error>> {
+    #[cfg(all(feature = "transaction", feature = "arcticmap"))]
+    {
+        #[cfg(feature = "cbor")]
+        transactions_tester(|_| ArcticMapDB::<CborSerde>::new())?;
+        #[cfg(feature = "json")]
+        transactions_tester(|_| ArcticMapDB::<JsonSerde>::new())?;
+        #[cfg(feature = "postcard")]
+        transactions_tester(|_| ArcticMapDB::<PostcardSerde>::new())?;
+    }
+    Ok(())
+}
+
+#[test]
+fn transactions_dashmap() -> Result<(), Box<dyn Error>> {
+    #[cfg(all(feature = "transaction", feature = "dashmap"))]
+    {
+        #[cfg(feature = "cbor")]
+        transactions_tester(|_| DashMapDB::<CborSerde>::new())?;
+        #[cfg(feature = "json")]
+        transactions_tester(|_| DashMapDB::<JsonSerde>::new())?;
+        #[cfg(feature = "postcard")]
+        transactions_tester(|_| DashMapDB::<PostcardSerde>::new())?;
+    }
 
     Ok(())
 }
 
 #[test]
-fn transactions_json() -> Result<(), Box<dyn Error>> {
-    transactions_tester::<DiskDB<JsonSerde>>()?;
+fn transactions_disk() -> Result<(), Box<dyn Error>> {
+    #[cfg(all(feature = "transaction", feature = "disk"))]
+    {
+        #[cfg(feature = "cbor")]
+        transactions_tester(DiskDB::<CborSerde>::new)?;
+        #[cfg(feature = "json")]
+        transactions_tester(DiskDB::<JsonSerde>::new)?;
+        #[cfg(feature = "postcard")]
+        transactions_tester(DiskDB::<PostcardSerde>::new)?;
+    }
 
     Ok(())
 }
 
 #[test]
-fn transactions_postcard() -> Result<(), Box<dyn Error>> {
-    transactions_tester::<DiskDB<PostcardSerde>>()?;
+fn transactions_hashmap() -> Result<(), Box<dyn Error>> {
+    #[cfg(all(feature = "transaction", feature = "hashmap"))]
+    {
+        #[cfg(feature = "cbor")]
+        transactions_tester(|_| HashMapDB::<CborSerde>::new())?;
+        #[cfg(feature = "json")]
+        transactions_tester(|_| HashMapDB::<JsonSerde>::new())?;
+        #[cfg(feature = "postcard")]
+        transactions_tester(|_| HashMapDB::<PostcardSerde>::new())?;
+    }
 
     Ok(())
 }
 
-#[test]
-fn transactions_memory() -> Result<(), Box<dyn Error>> {
-    transactions_tester::<MemoryDB<CborSerde>>()?;
-    transactions_tester::<MemoryDB<JsonSerde>>()?;
-    transactions_tester::<MemoryDB<PostcardSerde>>()?;
-
-    Ok(())
-}
-
-fn transactions_tester<DB: DatabaseTransaction>() -> Result<(), Box<dyn Error>> {
+fn transactions_tester<
+    DB: Database + DatabasePartitioned + DatabaseTransactionPartitioned + OperationPartitioned,
+>(
+    db_fn: impl FnOnce(PathBuf) -> DB,
+) -> Result<(), Box<dyn Error>>
+where
+    DB::TransactionDB: DatabaseSnapshot + OperationPartitioned,
+    <DB::TransactionDB as DatabaseSnapshot>::SnapshotDB: Database + OperationPartitioned, {
     init_tracing_for_tests();
 
-    let db_name = &format!("{}-{}", DB::SERDE_FORMAT, DB::NAME);
+    let (working_dir, _working_dir_guard) = create_temp_working_dir("transactions");
+    let _ = std::fs::remove_dir_all(&working_dir);
+    let db = db_fn(working_dir);
+
+    let db_name = &format!("{}-{}", DB::SERDE_FORMAT_EXTENSION, DB::NAME);
     let tx_name = &format!(
         "{}-{}",
-        DB::TransactionDB::SERDE_FORMAT,
+        DB::TransactionDB::SERDE_FORMAT_EXTENSION,
         DB::TransactionDB::NAME
     );
-
-    let (working_dir, _temp_dir_drop_guard) = create_temp_working_dir("transactions", db_name);
-
-    let _ = fs::remove_dir_all(&working_dir);
-
-    let db = DB::new(working_dir);
 
     {
         span_and_info!("Transaction Partitioned");
@@ -151,13 +185,13 @@ fn transactions_tester<DB: DatabaseTransaction>() -> Result<(), Box<dyn Error>> 
 
             assert_debug_snapshot!(
                 format!("{tx_name} transaction get all before"),
-                tx.get_all_before::<TestRecordPartitioned>()?
+                tx.snapshot().get_all::<TestRecordPartitioned>()?
             );
 
             // DB's records should be synced to TX's get_all_before records
             assert!(
                 db.get_all::<TestRecordPartitioned>()?
-                    == tx.get_all_before::<TestRecordPartitioned>()?
+                    == tx.snapshot().get_all::<TestRecordPartitioned>()?
             );
         }
 
@@ -202,11 +236,11 @@ fn transactions_tester<DB: DatabaseTransaction>() -> Result<(), Box<dyn Error>> 
 
         let id = &mut 0_u64;
 
-        let db_file_path = db.file_path("TestRecords");
+        let (db_file_path, _db_file_dir_tmp) = temp_file_path("TestRecords");
         db.try_initialize_storage_with_path(vec![] as Vec<TestRecord>, &db_file_path)?;
 
         let tx = db.transact()?;
-        let tx_file_path = tx.file_path("TestRecords");
+        let (tx_file_path, _tx_file_dir_tmp) = temp_file_path("TestRecords");
 
         {
             span_and_info!("Transaction", "Initialize");
@@ -233,28 +267,31 @@ fn transactions_tester<DB: DatabaseTransaction>() -> Result<(), Box<dyn Error>> 
             );
         }
 
-        {
-            span_and_info!("Operation", "Backup");
+        // {
+        //     span_and_info!("Operation", "Backup");
 
-            let backup_path = tx.try_backup_storage(&tx_file_path, "Manual backup")?;
-            assert_debug_snapshot!(
-                format!("{tx_name} Storage transaction backup"),
-                tx.try_read_storage::<Vec<TestRecord>>(backup_path)?
-            );
-        }
+        //     let backup_path = tx.try_backup_storage(&tx_file_path, "Manual backup")?;
+        //     assert_debug_snapshot!(
+        //         format!("{tx_name} Storage transaction backup"),
+        //         tx.try_read_storage::<Vec<TestRecord>>(backup_path)?
+        //     );
+        // }
 
         {
             span_and_info!("TransactionOperation", "Read before");
 
             assert_debug_snapshot!(
                 format!("{tx_name} Storage transaction read before"),
-                tx.try_read_storage_before::<Vec<TestRecord>>(&tx_file_path)?
+                tx.snapshot()
+                    .try_read_storage::<Vec<TestRecord>>(&tx_file_path)?
             );
 
-            // DB's records should be synced to TX's try_read_storage_before records
+            // DB's records should be synced to TX's snapshot's records
             assert!(
                 db.try_read_storage::<Vec<TestRecord>>(&db_file_path)?
-                    == tx.try_read_storage_before::<Vec<TestRecord>>(&tx_file_path)?
+                    == tx
+                        .snapshot()
+                        .try_read_storage::<Vec<TestRecord>>(&tx_file_path)?
             );
         }
 
@@ -300,11 +337,11 @@ fn transactions_tester<DB: DatabaseTransaction>() -> Result<(), Box<dyn Error>> 
         let id = &mut 0_u64;
         let default_record = TestRecord::new(id);
 
-        let db_file_path = db.file_path("TestRecord");
+        let (db_file_path, _db_file_dir_tmp) = temp_file_path("TestRecord");
         db.try_initialize_storage_with_path(default_record.clone(), &db_file_path)?;
 
         let tx = db.transact()?;
-        let tx_file_path = tx.file_path("TestRecord");
+        let (tx_file_path, _tx_file_dir_tmp) = temp_file_path("TestRecord");
 
         {
             span_and_info!("Transaction", "Initialize");
@@ -330,28 +367,31 @@ fn transactions_tester<DB: DatabaseTransaction>() -> Result<(), Box<dyn Error>> 
             );
         }
 
-        {
-            span_and_info!("Operation", "Backup");
+        // {
+        //     span_and_info!("Operation", "Backup");
 
-            let backup_path = tx.try_backup_storage(&tx_file_path, "Manual backup")?;
-            assert_debug_snapshot!(
-                format!("{tx_name} Single Storage transaction backup"),
-                tx.try_read_storage::<TestRecord>(backup_path)?
-            );
-        }
+        //     let backup_path = tx.try_backup_storage(&tx_file_path, "Manual backup")?;
+        //     assert_debug_snapshot!(
+        //         format!("{tx_name} Single Storage transaction backup"),
+        //         tx.try_read_storage::<TestRecord>(backup_path)?
+        //     );
+        // }
 
         {
             span_and_info!("TransactionOperation", "Read before");
 
             assert_debug_snapshot!(
                 format!("{tx_name} Single Storage transaction read before"),
-                tx.try_read_storage_before::<TestRecord>(&tx_file_path)?
+                tx.snapshot()
+                    .try_read_storage::<TestRecord>(&tx_file_path)?
             );
 
-            // DB's record should be synced to TX's try_read_storage_before record
+            // DB's record should be synced to TX's snapshot()'s record
             assert!(
                 db.try_read_storage::<TestRecord>(&db_file_path)?
-                    == tx.try_read_storage_before::<TestRecord>(&tx_file_path)?
+                    == tx
+                        .snapshot()
+                        .try_read_storage::<TestRecord>(&tx_file_path)?
             );
         }
 

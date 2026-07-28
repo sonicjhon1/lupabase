@@ -71,31 +71,6 @@ pub fn try_populate_storage<D: Database, O: Serialize + for<'a> Deserialize<'a>>
     return Ok(());
 }
 
-pub fn backup_failed_parse<D: Database>(
-    database: &D,
-    path: impl AsRef<Path>,
-    error: impl std::error::Error + Send + Sync + 'static,
-) -> Error {
-    let path = path.as_ref();
-
-    warn!(
-        "Failed deserialize file at [{}], creating a new backup, caused by: [{error}]",
-        path.display(),
-    );
-
-    return match database.try_backup_storage(path, "FAILED_PARSING") {
-        Ok(backup_path) => {
-            info!("Backup created successfully at [{}]", backup_path.display());
-
-            return Error::DBCorrupt {
-                file_path: path.to_path_buf(),
-                reason: Error::DeserializationFailure(Box::new(error)).to_string(),
-            };
-        }
-        Err(e) => e,
-    };
-}
-
 pub fn try_copy_file(source: impl AsRef<Path>, destination: impl AsRef<Path>) -> Result<()> {
     return std::fs::copy(&source, &destination)
         .map(|_| {})

@@ -1,6 +1,6 @@
 ---
 source: tests/transactions.rs
-expression: "tx.try_read_storage_before::<TestRecord>(&tx_file_path)?"
+expression: "tx.snapshot().try_read_storage::<TestRecord>(&tx_file_path)?"
 ---
 TestRecord {
     id: 1,

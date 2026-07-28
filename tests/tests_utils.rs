@@ -1,4 +1,8 @@
-use std::{fmt::Display, path::PathBuf, sync::OnceLock};
+use std::{
+    fmt::Display,
+    path::{Path, PathBuf},
+    sync::OnceLock,
+};
 use tempfile::TempDir;
 use tracing::info;
 use tracing_subscriber::{EnvFilter, fmt};
@@ -21,14 +25,21 @@ pub fn init_tracing_for_tests() {
     });
 }
 
-pub fn create_temp_working_dir(tester: impl Display, prefix: impl Display) -> (PathBuf, TempDir) {
-    let temp_dir = TempDir::with_prefix(format!("{tester}-{prefix}-"))
-        .expect("Temporary directory creation failed");
+pub fn create_temp_working_dir(tester: impl Display) -> (PathBuf, TempDir) {
+    let temp_dir =
+        TempDir::with_prefix(format!("{tester}-")).expect("Temporary directory creation failed");
     let pathbuf = temp_dir.path().to_path_buf();
 
     info!("Created temporary TempDir: [{}]", pathbuf.display());
 
     (pathbuf, temp_dir)
+}
+
+pub fn temp_file_path(path: impl AsRef<Path>) -> (PathBuf, TempDir) {
+    let temp_dir = tempfile::tempdir().expect("Temporary directory creation failed");
+    let path = temp_dir.path().join(path);
+
+    (path, temp_dir)
 }
 
 #[macro_export]

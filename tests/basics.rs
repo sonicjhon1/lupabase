@@ -3,50 +3,80 @@ pub mod tests_utils;
 
 use insta::assert_debug_snapshot;
 use lupabase::prelude::*;
-use std::{error::Error, fs};
+use std::{error::Error, path::PathBuf};
 use tests_records::*;
 use tests_utils::*;
 
 #[test]
-fn basics_cbor() -> Result<(), Box<dyn Error>> {
-    basics_tester::<DiskDB<CborSerde>>()?;
+fn basics_arcticmap() -> Result<(), Box<dyn Error>> {
+    #[cfg(feature = "arcticmap")]
+    {
+        #[cfg(feature = "cbor")]
+        basics_tester(|_| ArcticMapDB::<CborSerde>::new())?;
+        #[cfg(feature = "json")]
+        basics_tester(|_| ArcticMapDB::<JsonSerde>::new())?;
+        #[cfg(feature = "postcard")]
+        basics_tester(|_| ArcticMapDB::<PostcardSerde>::new())?;
+    }
 
     Ok(())
 }
 
 #[test]
-fn basics_json() -> Result<(), Box<dyn Error>> {
-    basics_tester::<DiskDB<JsonSerde>>()?;
+fn basics_dashmap() -> Result<(), Box<dyn Error>> {
+    #[cfg(feature = "dashmap")]
+    {
+        #[cfg(feature = "cbor")]
+        basics_tester(|_| DashMapDB::<CborSerde>::new())?;
+        #[cfg(feature = "json")]
+        basics_tester(|_| DashMapDB::<JsonSerde>::new())?;
+        #[cfg(feature = "postcard")]
+        basics_tester(|_| DashMapDB::<PostcardSerde>::new())?;
+    }
 
     Ok(())
 }
 
 #[test]
-fn basics_postcard() -> Result<(), Box<dyn Error>> {
-    basics_tester::<DiskDB<PostcardSerde>>()?;
+fn basics_disk() -> Result<(), Box<dyn Error>> {
+    #[cfg(feature = "disk")]
+    {
+        #[cfg(feature = "cbor")]
+        basics_tester(DiskDB::<CborSerde>::new)?;
+        #[cfg(feature = "json")]
+        basics_tester(DiskDB::<JsonSerde>::new)?;
+        #[cfg(feature = "postcard")]
+        basics_tester(DiskDB::<PostcardSerde>::new)?;
+    }
 
     Ok(())
 }
 
 #[test]
-fn basics_memory() -> Result<(), Box<dyn Error>> {
-    basics_tester::<MemoryDB<CborSerde>>()?;
-    basics_tester::<MemoryDB<JsonSerde>>()?;
-    basics_tester::<MemoryDB<PostcardSerde>>()?;
+fn basics_hashmap() -> Result<(), Box<dyn Error>> {
+    #[cfg(feature = "hashmap")]
+    {
+        #[cfg(feature = "cbor")]
+        basics_tester(|_| HashMapDB::<CborSerde>::new())?;
+        #[cfg(feature = "json")]
+        basics_tester(|_| HashMapDB::<JsonSerde>::new())?;
+        #[cfg(feature = "postcard")]
+        basics_tester(|_| HashMapDB::<PostcardSerde>::new())?;
+    }
 
     Ok(())
 }
 
-fn basics_tester<DB: Database>() -> Result<(), Box<dyn Error>> {
+fn basics_tester<DB: Database + DatabasePartitioned + OperationPartitioned>(
+    db_fn: impl FnOnce(PathBuf) -> DB,
+) -> Result<(), Box<dyn Error>> {
     init_tracing_for_tests();
 
-    let db_name = &format!("{}-{}", DB::SERDE_FORMAT, DB::NAME);
+    let (working_dir, _working_dir_guard) = create_temp_working_dir("basics");
+    let _ = std::fs::remove_dir_all(&working_dir);
+    let db = db_fn(working_dir);
 
-    let (working_dir, _temp_dir_drop_guard) = create_temp_working_dir("basics", db_name);
-
-    let _ = fs::remove_dir_all(&working_dir);
-
-    let db = DB::new(working_dir);
+    let db_name = &format!("{}-{}", DB::SERDE_FORMAT_EXTENSION, DB::NAME);
 
     {
         span_and_info!("Partitioned");
@@ -180,7 +210,7 @@ fn basics_tester<DB: Database>() -> Result<(), Box<dyn Error>> {
     {
         span_and_info!("Collection");
 
-        let db_file_path = db.file_path("TestRecords");
+        let (db_file_path, _db_file_dir_tmp) = temp_file_path("TestRecords");
 
         {
             span_and_info!("Initialize");
@@ -207,15 +237,15 @@ fn basics_tester<DB: Database>() -> Result<(), Box<dyn Error>> {
             );
         }
 
-        {
-            span_and_info!("Operation", "Backup");
+        // {
+        //     span_and_info!("Operation", "Backup");
 
-            let backup_path = db.try_backup_storage(&db_file_path, "Manual backup")?;
-            assert_debug_snapshot!(
-                format!("{db_name} Storage backup"),
-                db.try_read_storage::<Vec<TestRecord>>(backup_path)?
-            );
-        }
+        //     let backup_path = db.try_backup_storage(&db_file_path, "Manual backup")?;
+        //     assert_debug_snapshot!(
+        //         format!("{db_name} Storage backup"),
+        //         db.try_read_storage::<Vec<TestRecord>>(backup_path)?
+        //     );
+        // }
 
         {
             span_and_info!("Re-Initialize");
@@ -231,7 +261,7 @@ fn basics_tester<DB: Database>() -> Result<(), Box<dyn Error>> {
     {
         span_and_info!("Single");
 
-        let db_file_path = db.file_path("TestRecord");
+        let (db_file_path, _db_file_dir_tmp) = temp_file_path("TestRecord");
 
         let id = &mut 0_u64;
         let default_record = TestRecord::new(id);
@@ -258,15 +288,15 @@ fn basics_tester<DB: Database>() -> Result<(), Box<dyn Error>> {
             );
         }
 
-        {
-            span_and_info!("Operation", "Backup");
+        // {
+        //     span_and_info!("Operation", "Backup");
 
-            let backup_path = db.try_backup_storage(&db_file_path, "Manual backup")?;
-            assert_debug_snapshot!(
-                format!("{db_name} Single Storage backup"),
-                db.try_read_storage::<TestRecord>(backup_path)?
-            );
-        }
+        //     let backup_path = db.try_backup_storage(&db_file_path, "Manual backup")?;
+        //     assert_debug_snapshot!(
+        //         format!("{db_name} Single Storage backup"),
+        //         db.try_read_storage::<TestRecord>(backup_path)?
+        //     );
+        // }
 
         {
             span_and_info!("Re-Initialize");

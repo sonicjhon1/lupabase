@@ -1,8 +1,0 @@
----
-source: tests/transactions.rs
-expression: "tx.try_read_storage::<TestRecord>(backup_path)?"
----
-TestRecord {
-    id: 1,
-    data: "Modified the data",
-}

@@ -1,4 +1,4 @@
-use crate::{error::Result, prelude::DatabaseOps, record::DatabaseRecordPartitioned};
+use crate::{error::Result, prelude::OperationPartitioned, record::DatabaseRecordPartitioned};
 
 /// Provides a composable variadic database operation for [`DatabaseRecordPartitioned`] with [`DatabaseOps`].
 ///
@@ -8,31 +8,38 @@ pub trait DatabaseRecordOperatablePartitioned {
     type Collection;
 
     /// See [`DatabaseOps::get_all`] for details and the list of possible errors.
-    fn get_all(db: &impl DatabaseOps) -> Result<Self::Collection>;
+    fn get_all(db: &impl OperationPartitioned) -> Result<Self::Collection>;
 
     /// See [`DatabaseOps::insert`] for details and the list of possible errors.
-    fn insert(db: &impl DatabaseOps, new_record: Self) -> Result<()>;
+    fn insert(db: &impl OperationPartitioned, new_record: Self) -> Result<()>;
 
     /// See [`DatabaseOps::insert_all`] for details and the list of possible errors.
-    fn insert_all(db: &impl DatabaseOps, new_records: Self::Collection) -> Result<()>;
+    fn insert_all(db: &impl OperationPartitioned, new_records: Self::Collection) -> Result<()>;
 
     /// See [`DatabaseOps::update`] for details and the list of possible errors.
-    fn update(db: &impl DatabaseOps, updated_record: Self) -> Result<()>;
+    fn update(db: &impl OperationPartitioned, updated_record: Self) -> Result<()>;
 
     /// See [`DatabaseOps::update_all`] for details and the list of possible errors.
-    fn update_all(db: &impl DatabaseOps, updated_records: Self::Collection) -> Result<()>;
+    fn update_all(db: &impl OperationPartitioned, updated_records: Self::Collection) -> Result<()>;
 
     /// See [`DatabaseOps::upsert`] for details and the list of possible errors.
-    fn upsert(db: &impl DatabaseOps, upserted_record: Self) -> Result<()>;
+    fn upsert(db: &impl OperationPartitioned, upserted_record: Self) -> Result<()>;
 
     /// See [`DatabaseOps::upsert_all`] for details and the list of possible errors.
-    fn upsert_all(db: &impl DatabaseOps, upserted_records: Self::Collection) -> Result<()>;
+    fn upsert_all(db: &impl OperationPartitioned, upserted_records: Self::Collection)
+    -> Result<()>;
 
     /// See [`DatabaseOps::replace_all`] for details and the list of possible errors.
-    fn replace_all(db: &impl DatabaseOps, replaced_records: Self::Collection) -> Result<()>;
+    fn replace_all(
+        db: &impl OperationPartitioned,
+        replaced_records: Self::Collection,
+    ) -> Result<()>;
 
     /// See [`DatabaseOps::try_initialize_storage`] for details and the list of possible errors.
-    fn try_initialize_storage(db: &impl DatabaseOps, default_data: Self::Collection) -> Result<()>;
+    fn try_initialize_storage(
+        db: &impl OperationPartitioned,
+        default_data: Self::Collection,
+    ) -> Result<()>;
 }
 
 impl<R1> DatabaseRecordOperatablePartitioned for R1
@@ -41,37 +48,46 @@ where
 {
     type Collection = Vec<R1>;
 
-    fn get_all(db: &impl DatabaseOps) -> Result<Self::Collection> { return db.get_all(); }
+    fn get_all(db: &impl OperationPartitioned) -> Result<Self::Collection> { return db.get_all(); }
 
-    fn insert(db: &impl DatabaseOps, new_record: Self) -> Result<()> {
+    fn insert(db: &impl OperationPartitioned, new_record: Self) -> Result<()> {
         return db.insert(new_record);
     }
 
-    fn insert_all(db: &impl DatabaseOps, new_records: Self::Collection) -> Result<()> {
+    fn insert_all(db: &impl OperationPartitioned, new_records: Self::Collection) -> Result<()> {
         return db.insert_all(new_records);
     }
 
-    fn update(db: &impl DatabaseOps, updated_record: Self) -> Result<()> {
+    fn update(db: &impl OperationPartitioned, updated_record: Self) -> Result<()> {
         return db.update(updated_record);
     }
 
-    fn update_all(db: &impl DatabaseOps, updated_records: Self::Collection) -> Result<()> {
+    fn update_all(db: &impl OperationPartitioned, updated_records: Self::Collection) -> Result<()> {
         return db.update_all(updated_records);
     }
 
-    fn upsert(db: &impl DatabaseOps, upserted_record: Self) -> Result<()> {
+    fn upsert(db: &impl OperationPartitioned, upserted_record: Self) -> Result<()> {
         return db.upsert(upserted_record);
     }
 
-    fn upsert_all(db: &impl DatabaseOps, upserted_records: Self::Collection) -> Result<()> {
+    fn upsert_all(
+        db: &impl OperationPartitioned,
+        upserted_records: Self::Collection,
+    ) -> Result<()> {
         return db.upsert_all(upserted_records);
     }
 
-    fn replace_all(db: &impl DatabaseOps, replaced_records: Self::Collection) -> Result<()> {
+    fn replace_all(
+        db: &impl OperationPartitioned,
+        replaced_records: Self::Collection,
+    ) -> Result<()> {
         return db.replace_all(replaced_records);
     }
 
-    fn try_initialize_storage(db: &impl DatabaseOps, default_data: Self::Collection) -> Result<()> {
+    fn try_initialize_storage(
+        db: &impl OperationPartitioned,
+        default_data: Self::Collection,
+    ) -> Result<()> {
         return db.try_initialize_storage::<R1, Vec<R1>>(default_data);
     }
 }
@@ -83,46 +99,55 @@ where
 {
     type Collection = (Vec<R1>, RN::Collection);
 
-    fn get_all(db: &impl DatabaseOps) -> Result<Self::Collection> {
+    fn get_all(db: &impl OperationPartitioned) -> Result<Self::Collection> {
         return Ok((db.get_all::<R1>()?, RN::get_all(db)?));
     }
 
-    fn insert(db: &impl DatabaseOps, new_record: Self) -> Result<()> {
+    fn insert(db: &impl OperationPartitioned, new_record: Self) -> Result<()> {
         db.insert(new_record.0)?;
         return RN::insert(db, new_record.1);
     }
 
-    fn insert_all(db: &impl DatabaseOps, new_records: Self::Collection) -> Result<()> {
+    fn insert_all(db: &impl OperationPartitioned, new_records: Self::Collection) -> Result<()> {
         db.insert_all(new_records.0)?;
         return RN::insert_all(db, new_records.1);
     }
 
-    fn update(db: &impl DatabaseOps, updated_record: Self) -> Result<()> {
+    fn update(db: &impl OperationPartitioned, updated_record: Self) -> Result<()> {
         db.update(updated_record.0)?;
         return RN::update(db, updated_record.1);
     }
 
-    fn update_all(db: &impl DatabaseOps, updated_records: Self::Collection) -> Result<()> {
+    fn update_all(db: &impl OperationPartitioned, updated_records: Self::Collection) -> Result<()> {
         db.update_all(updated_records.0)?;
         return RN::update_all(db, updated_records.1);
     }
 
-    fn upsert(db: &impl DatabaseOps, upserted_record: Self) -> Result<()> {
+    fn upsert(db: &impl OperationPartitioned, upserted_record: Self) -> Result<()> {
         db.upsert(upserted_record.0)?;
         return RN::upsert(db, upserted_record.1);
     }
 
-    fn upsert_all(db: &impl DatabaseOps, upserted_records: Self::Collection) -> Result<()> {
+    fn upsert_all(
+        db: &impl OperationPartitioned,
+        upserted_records: Self::Collection,
+    ) -> Result<()> {
         db.upsert_all(upserted_records.0)?;
         return RN::upsert_all(db, upserted_records.1);
     }
 
-    fn replace_all(db: &impl DatabaseOps, replaced_records: Self::Collection) -> Result<()> {
+    fn replace_all(
+        db: &impl OperationPartitioned,
+        replaced_records: Self::Collection,
+    ) -> Result<()> {
         db.replace_all(replaced_records.0)?;
         return RN::replace_all(db, replaced_records.1);
     }
 
-    fn try_initialize_storage(db: &impl DatabaseOps, default_data: Self::Collection) -> Result<()> {
+    fn try_initialize_storage(
+        db: &impl OperationPartitioned,
+        default_data: Self::Collection,
+    ) -> Result<()> {
         db.try_initialize_storage::<R1, Vec<R1>>(default_data.0)?;
         return RN::try_initialize_storage(db, default_data.1);
     }

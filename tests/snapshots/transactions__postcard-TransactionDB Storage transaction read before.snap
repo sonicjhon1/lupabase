@@ -1,5 +1,5 @@
 ---
 source: tests/transactions.rs
-expression: "tx.try_read_storage_before::<Vec<TestRecord>>(&tx_file_path)?"
+expression: "tx.snapshot().try_read_storage::<Vec<TestRecord>>(&tx_file_path)?"
 ---
 []

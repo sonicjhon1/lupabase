@@ -1,0 +1,10 @@
+---
+source: tests/basics.rs
+expression: "db.get_all::<TestRecordPartitioned>()?"
+---
+[
+    TestRecordPartitioned {
+        id: 1,
+        data: "My data of 1",
+    },
+]

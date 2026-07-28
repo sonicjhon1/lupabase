@@ -3,10 +3,10 @@
 pub mod database;
 pub mod engine;
 pub mod error;
+pub mod operations;
 pub mod prelude;
 pub mod record;
 pub mod serdes;
-pub mod transaction;
 mod utils;
 
 pub use error::{Error, Result};
