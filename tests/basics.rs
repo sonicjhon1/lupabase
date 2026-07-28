@@ -22,9 +22,17 @@ fn basics_json() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
+fn basics_postcard() -> Result<(), Box<dyn Error>> {
+    basics_tester::<DiskDB<PostcardSerde>>()?;
+
+    Ok(())
+}
+
+#[test]
 fn basics_memory() -> Result<(), Box<dyn Error>> {
     basics_tester::<MemoryDB<CborSerde>>()?;
     basics_tester::<MemoryDB<JsonSerde>>()?;
+    basics_tester::<MemoryDB<PostcardSerde>>()?;
 
     Ok(())
 }

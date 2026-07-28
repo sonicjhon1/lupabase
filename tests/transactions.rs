@@ -22,9 +22,17 @@ fn transactions_json() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
+fn transactions_postcard() -> Result<(), Box<dyn Error>> {
+    transactions_tester::<DiskDB<PostcardSerde>>()?;
+
+    Ok(())
+}
+
+#[test]
 fn transactions_memory() -> Result<(), Box<dyn Error>> {
     transactions_tester::<MemoryDB<CborSerde>>()?;
     transactions_tester::<MemoryDB<JsonSerde>>()?;
+    transactions_tester::<MemoryDB<PostcardSerde>>()?;
 
     Ok(())
 }

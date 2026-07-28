@@ -1,0 +1,8 @@
+---
+source: tests/transactions.rs
+expression: "tx.try_read_storage::<TestRecord>(&tx_file_path)?"
+---
+TestRecord {
+    id: 1,
+    data: "My data of 1",
+}

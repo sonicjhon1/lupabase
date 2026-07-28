@@ -66,3 +66,27 @@ mod json {
         }
     }
 }
+
+#[cfg(feature = "postcard")]
+pub use postcar::*;
+
+#[cfg(feature = "postcard")]
+mod postcar {
+    use super::*;
+    use crate::Error;
+
+    #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
+    pub struct PostcardSerde;
+
+    impl BytesSerde for PostcardSerde {
+        const FORMAT: &str = "postcard";
+
+        fn try_serialize_as_bytes<S: Serialize>(data: S) -> Result<Vec<u8>> {
+            postcard2::to_vec(&data).map_err(|e| Error::SerializationFailure(Box::new(e)))
+        }
+
+        fn try_deserialize_from_bytes<'de, O: Deserialize<'de>>(bytes: &'de [u8]) -> Result<O> {
+            postcard2::from_bytes(bytes).map_err(|e| Error::DeserializationFailure(Box::new(e)))
+        }
+    }
+}
