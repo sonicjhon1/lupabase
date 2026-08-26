@@ -1,6 +1,8 @@
 mod operatable;
+mod partition;
 pub mod utils;
 pub use operatable::*;
+pub use partition::*;
 
 use crate::{Deserialize, Serialize};
 use std::{fmt::Debug, hash::Hash};
@@ -28,5 +30,5 @@ pub trait DatabaseRecord: Serialize + for<'a> Deserialize<'a> {
 /// Represents a Record that has a built-in partition
 pub trait DatabaseRecordPartitioned: DatabaseRecord {
     /// Specifies the partition where records of this type are stored
-    const PARTITION: &str;
+    const PARTITION: RecordPartition<'_>;
 }

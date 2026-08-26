@@ -43,8 +43,8 @@ impl<S: BytesSerde> Database for TransactionDB<S> {
 }
 
 impl<S: BytesSerde> DatabasePartitioned for TransactionDB<S> {
-    fn partition_path<T: DatabaseRecordPartitioned>(&self) -> std::borrow::Cow<'_, Path> {
-        std::borrow::Cow::Borrowed(Path::new(T::PARTITION))
+    fn partition_path<T: DatabaseRecordPartitioned>(&self) -> RecordPartitionPath<'_> {
+        RecordPartitionPath::Borrowed(Path::new(T::PARTITION))
     }
 }
 
@@ -66,3 +66,5 @@ impl<S: BytesSerde> Operation for TransactionDB<S> {
         try_populate_storage::<_, O>(&self.records_after, default_data, &path)
     }
 }
+
+impl<S: BytesSerde> DatabaseProcedure for TransactionDB<S> {}

@@ -1,0 +1,5 @@
+---
+source: tests/procedures.rs
+expression: "db.execute(ProcedureCollectionGet::<'_, TestRecordPartitioned,\n_>::new_partitioned(&db).with_filter(FilterNeverMatches),)?"
+---
+[]

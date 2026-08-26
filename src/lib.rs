@@ -5,6 +5,7 @@ pub mod engine;
 pub mod error;
 pub mod operations;
 pub mod prelude;
+pub mod procedures;
 pub mod record;
 pub mod serdes;
 mod utils;

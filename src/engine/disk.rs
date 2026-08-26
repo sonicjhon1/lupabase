@@ -105,8 +105,8 @@ impl<S: BytesSerde> Database for DiskDB<S> {
 }
 
 impl<S: BytesSerde> DatabasePartitioned for DiskDB<S> {
-    fn partition_path<T: DatabaseRecordPartitioned>(&self) -> std::borrow::Cow<'_, Path> {
-        std::borrow::Cow::Owned(self.file_path(T::PARTITION))
+    fn partition_path<T: DatabaseRecordPartitioned>(&self) -> RecordPartitionPath<'_> {
+        RecordPartitionPath::Owned(self.file_path(T::PARTITION))
     }
 }
 
@@ -143,6 +143,8 @@ impl<S: BytesSerde> Operation for DiskDB<S> {
         return try_populate_storage::<Self, O>(self, default_data, path);
     }
 }
+
+impl<S: BytesSerde> DatabaseProcedure for DiskDB<S> {}
 
 #[cfg(feature = "transaction")]
 impl<S: BytesSerde> DatabaseTransaction for DiskDB<S> {

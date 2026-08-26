@@ -86,8 +86,8 @@ impl<S: BytesSerde> Database for DashMapDB<S> {
 }
 
 impl<S: BytesSerde> DatabasePartitioned for DashMapDB<S> {
-    fn partition_path<T: DatabaseRecordPartitioned>(&self) -> std::borrow::Cow<'_, Path> {
-        std::borrow::Cow::Borrowed(Path::new(T::PARTITION))
+    fn partition_path<T: DatabaseRecordPartitioned>(&self) -> RecordPartitionPath<'_> {
+        RecordPartitionPath::Borrowed(Path::new(T::PARTITION))
     }
 }
 
@@ -102,6 +102,8 @@ impl<S: BytesSerde> Operation for DashMapDB<S> {
         return try_populate_storage::<Self, O>(self, default_data, path);
     }
 }
+
+impl<S: BytesSerde> DatabaseProcedure for DashMapDB<S> {}
 
 #[cfg(feature = "transaction")]
 impl<S: BytesSerde> DatabaseTransaction for DashMapDB<S> {

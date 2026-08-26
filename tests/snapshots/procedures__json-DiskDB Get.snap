@@ -1,0 +1,22 @@
+---
+source: tests/procedures.rs
+expression: "db.execute(ProcedureCollectionGet::<'_, TestRecord,\n_>::new(db.partition_path::<TestRecordPartitioned>(),))?"
+---
+[
+    TestRecord {
+        id: 1,
+        data: "My data of 1",
+    },
+    TestRecord {
+        id: 2,
+        data: "My data of 2",
+    },
+    TestRecord {
+        id: 3,
+        data: "My data of 3",
+    },
+    TestRecord {
+        id: 5,
+        data: "My data of 5",
+    },
+]
