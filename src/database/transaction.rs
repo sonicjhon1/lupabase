@@ -17,7 +17,8 @@ pub trait DatabaseTransaction: Database {
 
     /// Commits the current transaction in the given path
     ///
-    /// See [`DatabaseTransaction::try_commit`] for details and the list of possible errors.
+    /// # Errors
+    /// - I/O
     fn try_commit_with_path<O: Serialize + for<'a> Deserialize<'a>>(
         &self,
         transaction: &Self::TransactionDB,
@@ -25,9 +26,9 @@ pub trait DatabaseTransaction: Database {
         database_path: impl AsRef<Path>,
     ) -> Result<()> {
         let records = transaction.try_read_storage::<O>(&transaction_path)?;
-        match self.try_write_storage(records, &database_path) {
-            Ok(()) => Ok(()),
-            Err(e) => {
+
+        self.try_write_storage(records, &database_path)
+            .or_else(|e| {
                 let database_path = database_path.as_ref().to_path_buf();
 
                 self.try_rollback_with_path::<O>(transaction, transaction_path, &database_path)
@@ -40,13 +41,13 @@ pub trait DatabaseTransaction: Database {
                     file_path: database_path,
                     reason: e.to_string(),
                 });
-            }
-        }
+            })
     }
 
     /// Rolls back the current transaction in the given path
     ///
-    /// See [`DatabaseTransaction::try_rollback`] for details and the list of possible errors.
+    /// # Errors
+    /// - I/O
     fn try_rollback_with_path<O: Serialize + for<'a> Deserialize<'a>>(
         &self,
         transaction: &Self::TransactionDB,
