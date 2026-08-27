@@ -91,9 +91,9 @@ impl<S: BytesSerde> DatabasePartitioned for DashMapDB<S> {
     }
 }
 
-impl<S: BytesSerde> OperationPartitioned for DashMapDB<S> {}
+impl<S: BytesSerde> OperationCrudPartitioned for DashMapDB<S> {}
 
-impl<S: BytesSerde> Operation for DashMapDB<S> {
+impl<S: BytesSerde> OperationCrud for DashMapDB<S> {
     fn try_initialize_storage_with_path<O: Serialize + for<'a> Deserialize<'a> + Borrow<O>>(
         &self,
         default_data: O,

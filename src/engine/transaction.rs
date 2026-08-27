@@ -54,9 +54,9 @@ impl<S: BytesSerde> DatabaseSnapshot for TransactionDB<S> {
     fn snapshot(&self) -> &Self::SnapshotDB { &self.records_before }
 }
 
-impl<S: BytesSerde> OperationPartitioned for TransactionDB<S> {}
+impl<S: BytesSerde> OperationCrudPartitioned for TransactionDB<S> {}
 
-impl<S: BytesSerde> Operation for TransactionDB<S> {
+impl<S: BytesSerde> OperationCrud for TransactionDB<S> {
     fn try_initialize_storage_with_path<O: Serialize + for<'a> Deserialize<'a> + Borrow<O>>(
         &self,
         default_data: O,

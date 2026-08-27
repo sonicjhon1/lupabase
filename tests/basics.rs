@@ -67,7 +67,7 @@ fn basics_hashmap() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn basics_tester<DB: Database + DatabasePartitioned + OperationPartitioned>(
+fn basics_tester<DB: Database + DatabasePartitioned + OperationCrudPartitioned>(
     db_fn: impl FnOnce(PathBuf) -> DB,
 ) -> Result<(), Box<dyn Error>> {
     init_tracing_for_tests();

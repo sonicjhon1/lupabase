@@ -67,13 +67,13 @@ fn transactions_hashmap() -> Result<(), Box<dyn Error>> {
 }
 
 fn transactions_tester<
-    DB: Database + DatabasePartitioned + DatabaseTransactionPartitioned + OperationPartitioned,
+    DB: Database + DatabasePartitioned + DatabaseTransactionPartitioned + OperationCrudPartitioned,
 >(
     db_fn: impl FnOnce(PathBuf) -> DB,
 ) -> Result<(), Box<dyn Error>>
 where
-    DB::TransactionDB: DatabaseSnapshot + OperationPartitioned,
-    <DB::TransactionDB as DatabaseSnapshot>::SnapshotDB: Database + OperationPartitioned, {
+    DB::TransactionDB: DatabaseSnapshot + OperationCrudPartitioned,
+    <DB::TransactionDB as DatabaseSnapshot>::SnapshotDB: Database + OperationCrudPartitioned, {
     init_tracing_for_tests();
 
     let (working_dir, _working_dir_guard) = create_temp_working_dir("transactions");

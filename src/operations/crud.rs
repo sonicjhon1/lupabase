@@ -6,21 +6,27 @@ use crate::{
 };
 use std::{borrow::Borrow, path::Path};
 
-/// Provides common database operations with arbritary paths for [`Database`]
+/// Provides common database operations with arbitrary paths for [`Database`].
 ///
 /// This trait supplies generic implementations for initializing, retrieving,
-/// inserting, updating, and replacing records in the database.
-pub trait Operation: Database {
-    /// Read all [`DatabaseRecord`] from the given path
+/// inserting, updating, upserting, and replacing records in the database.
+pub trait OperationCrud: Database {
+    /// Reads all [`DatabaseRecord`] from the given path.
     ///
-    /// See [`DatabaseOps::get_all`] for details and the list of possible errors.
+    /// # Errors
+    /// - I/O
     fn get_all_with_path<T: DatabaseRecord>(&self, path: impl AsRef<Path>) -> Result<Vec<T>> {
         return self.try_read_storage::<Vec<T>>(path);
     }
 
-    /// Inserts a single [`DatabaseRecord`] into the given path
+    /// Inserts a single [`DatabaseRecord`] into the given path.
     ///
-    /// See [`DatabaseOps::insert`] for details and the list of possible errors.
+    /// The record is wrapped into a slice and passed to
+    /// [`OperationCrud::insert_all_with_path`].
+    ///
+    /// # Errors
+    /// - I/O
+    /// - A duplicate unique identifier is found among the existing or new records
     fn insert_with_path<T: DatabaseRecord>(
         &self,
         updated_record: T,
@@ -29,9 +35,11 @@ pub trait Operation: Database {
         return self.insert_all_with_path([updated_record], path);
     }
 
-    /// Inserts multiple [`DatabaseRecord`] into the given path
+    /// Inserts multiple [`DatabaseRecord`] into the given path.
     ///
-    /// See [`DatabaseOps::insert_all`] for details and the list of possible errors.
+    /// # Errors
+    /// - I/O
+    /// - A duplicate unique identifier is found among the existing or new records
     fn insert_all_with_path<T: DatabaseRecord>(
         &self,
         new_records: impl AsRef<[T]>,
@@ -51,9 +59,14 @@ pub trait Operation: Database {
         );
     }
 
-    /// Updates a single [`DatabaseRecord`] into the given path
+    /// Updates a single [`DatabaseRecord`] in the given path.
     ///
-    /// See [`DatabaseOps::update`] for details and the list of possible errors.
+    /// The record is wrapped into a slice and passed to
+    /// [`OperationCrud::update_all_with_path`].
+    ///
+    /// # Errors
+    /// - I/O
+    /// - A record with the given unique identifier does not exist
     fn update_with_path<T: DatabaseRecord>(
         &self,
         updated_record: T,
@@ -62,9 +75,11 @@ pub trait Operation: Database {
         return self.update_all_with_path([updated_record], path);
     }
 
-    /// Updates multiple [`DatabaseRecord`] into the given path
+    /// Updates multiple [`DatabaseRecord`] in the given path.
     ///
-    /// See [`DatabaseOps::update_all`] for details and the list of possible errors.
+    /// # Errors
+    /// - I/O
+    /// - A record with one of the given unique identifiers does not exist
     fn update_all_with_path<T: DatabaseRecord>(
         &self,
         updated_records: impl IntoIterator<Item = T>,
@@ -84,9 +99,13 @@ pub trait Operation: Database {
         return self.try_write_storage(records, path);
     }
 
-    /// Updates or inserts a single [`DatabaseRecord`] into the given path
+    /// Updates or inserts a single [`DatabaseRecord`] into the given path.
     ///
-    /// See [`DatabaseOps::upsert`] for details and the list of possible errors.
+    /// The record is wrapped into a slice and passed to
+    /// [`OperationCrud::upsert_all_with_path`].
+    ///
+    /// # Errors
+    /// - I/O
     fn upsert_with_path<T: DatabaseRecord>(
         &self,
         upserted_record: T,
@@ -95,9 +114,10 @@ pub trait Operation: Database {
         return self.upsert_all_with_path([upserted_record], path);
     }
 
-    /// Updates or inserts multiple [`DatabaseRecord`] into the given path
+    /// Updates or inserts multiple [`DatabaseRecord`] into the given path.
     ///
-    /// See [`DatabaseOps::upsert_all`] for details and the list of possible errors.
+    /// # Errors
+    /// - I/O
     fn upsert_all_with_path<T: DatabaseRecord>(
         &self,
         upserted_records: impl IntoIterator<Item = T>,
@@ -116,9 +136,11 @@ pub trait Operation: Database {
         return self.try_write_storage(records, path);
     }
 
-    /// Replace all [`DatabaseRecord`] into the given path with the provided [`DatabaseRecord`]
+    /// Replaces all [`DatabaseRecord`] in the given path with the provided records.
     ///
-    /// See [`DatabaseOps::replace_all`] for details and the list of possible errors.
+    /// # Errors
+    /// - I/O
+    /// - A duplicate unique identifier is found among the provided records
     fn replace_all_with_path<T: DatabaseRecord>(
         &self,
         updated_records: impl IntoIterator<Item = T>,
@@ -143,9 +165,10 @@ pub trait Operation: Database {
         return self.try_write_storage(records, path);
     }
 
-    /// Attempts to initialize the provided default data into the given storage path
+    /// Attempts to initialize the provided default data into the given storage path.
     ///
-    /// See [`DatabaseOps::try_initialize_storage`] for details and the list of possible errors.
+    /// # Errors
+    /// - I/O
     fn try_initialize_storage_with_path<O: Serialize + for<'a> Deserialize<'a> + Borrow<O>>(
         &self,
         default_data: O,

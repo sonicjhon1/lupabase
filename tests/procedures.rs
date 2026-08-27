@@ -74,7 +74,7 @@ fn procedures_disk() -> Result<(), Box<dyn Error>> {
 //     Ok(())
 // }
 
-fn tester<DB: Database + DatabasePartitioned + DatabaseProcedure + OperationPartitioned>(
+fn tester<DB: Database + DatabasePartitioned + DatabaseProcedure + OperationCrudPartitioned>(
     db_fn: impl FnOnce(PathBuf) -> DB,
 ) -> Result<(), Box<dyn Error>> {
     init_tracing_for_tests();

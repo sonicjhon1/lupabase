@@ -132,9 +132,9 @@ impl<S: BytesSerde> OperationBackup for DiskDB<S> {
 
 impl<S: BytesSerde> OperationBackupPartitioned for DiskDB<S> {}
 
-impl<S: BytesSerde> OperationPartitioned for DiskDB<S> {}
+impl<S: BytesSerde> OperationCrudPartitioned for DiskDB<S> {}
 
-impl<S: BytesSerde> Operation for DiskDB<S> {
+impl<S: BytesSerde> OperationCrud for DiskDB<S> {
     fn try_initialize_storage_with_path<O: Serialize + for<'a> Deserialize<'a> + Borrow<O>>(
         &self,
         default_data: O,
