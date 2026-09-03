@@ -1,5 +1,6 @@
 use crate::{
     database::DatabasePartitioned,
+    prelude::Database,
     procedures::{CollectionFilter, FilterAlwaysMatches, Procedure},
     record::{DatabaseRecord, DatabaseRecordPartitioned, RecordPartitionPath},
 };
@@ -49,17 +50,15 @@ impl<'p, R, F> ProcedureCollectionGet<'p, R, F> {
     }
 }
 
-impl<'p, R, F> Procedure for ProcedureCollectionGet<'p, R, F>
+impl<'p, DB, R, F> Procedure<DB> for ProcedureCollectionGet<'p, R, F>
 where
+    DB: Database,
     R: DatabaseRecord,
     F: CollectionFilter<R>,
 {
     type Output = Vec<R>;
 
-    fn execute<DB: crate::prelude::Database + ?Sized>(
-        self,
-        db: &DB,
-    ) -> crate::Result<Self::Output> {
+    fn execute(self, db: &DB) -> crate::Result<Self::Output> {
         Ok(db
             .try_read_storage::<Vec<R>>(self.partition_path)?
             .into_iter()

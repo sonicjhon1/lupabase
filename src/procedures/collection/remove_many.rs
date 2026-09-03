@@ -1,4 +1,5 @@
 use crate::{
+    database::Database,
     procedures::{CollectionFilter, Procedure},
     record::{DatabaseRecord, RecordPartitionPath},
 };
@@ -26,17 +27,15 @@ impl<'p, R, F> ProcedureCollectionRemoveMany<'p, R, F> {
     }
 }
 
-impl<'p, R, F> Procedure for ProcedureCollectionRemoveMany<'p, R, F>
+impl<'p, DB, R, F> Procedure<DB> for ProcedureCollectionRemoveMany<'p, R, F>
 where
+    DB: Database,
     R: DatabaseRecord,
     F: CollectionFilter<R>,
 {
     type Output = ();
 
-    fn execute<DB: crate::prelude::Database + ?Sized>(
-        self,
-        db: &DB,
-    ) -> crate::Result<Self::Output> {
+    fn execute(self, db: &DB) -> crate::Result<Self::Output> {
         let mut records = db.try_read_storage::<Vec<R>>(&self.partition_path)?;
 
         records.retain(|record| !self.filter.matches(record));

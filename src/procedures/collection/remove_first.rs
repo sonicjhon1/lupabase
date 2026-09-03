@@ -1,5 +1,6 @@
 use crate::{
     Error,
+    database::Database,
     procedures::{CollectionFilter, Procedure},
     record::{DatabaseRecord, RecordPartitionPath},
 };
@@ -27,17 +28,15 @@ impl<'p, R, F> ProcedureCollectionRemoveFirst<'p, R, F> {
     }
 }
 
-impl<'p, R, F> Procedure for ProcedureCollectionRemoveFirst<'p, R, F>
+impl<'p, DB, R, F> Procedure<DB> for ProcedureCollectionRemoveFirst<'p, R, F>
 where
+    DB: Database,
     R: DatabaseRecord,
     F: CollectionFilter<R>,
 {
     type Output = ();
 
-    fn execute<DB: crate::prelude::Database + ?Sized>(
-        self,
-        db: &DB,
-    ) -> crate::Result<Self::Output> {
+    fn execute(self, db: &DB) -> crate::Result<Self::Output> {
         let mut records = db.try_read_storage::<Vec<R>>(&self.partition_path)?;
 
         let index = records

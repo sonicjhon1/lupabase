@@ -1,6 +1,6 @@
 use crate::{
     Error,
-    database::DatabasePartitioned,
+    database::{Database, DatabasePartitioned},
     procedures::{CollectionFilter, FilterUnique, Procedure},
     record::{DatabaseRecord, DatabaseRecordPartitioned, RecordPartitionPath},
 };
@@ -49,17 +49,15 @@ impl<'p, R, F> ProcedureCollectionCreate<'p, R, F> {
     }
 }
 
-impl<'p, R, F> Procedure for ProcedureCollectionCreate<'p, R, F>
+impl<'p, DB, R, F> Procedure<DB> for ProcedureCollectionCreate<'p, R, F>
 where
+    DB: Database,
     R: DatabaseRecord,
     F: CollectionFilter<R>,
 {
     type Output = ();
 
-    fn execute<DB: crate::prelude::Database + ?Sized>(
-        self,
-        db: &DB,
-    ) -> crate::Result<Self::Output> {
+    fn execute(self, db: &DB) -> crate::Result<Self::Output> {
         let mut records = db.try_read_storage::<Vec<R>>(&self.partition_path)?;
 
         records
