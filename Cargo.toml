@@ -43,7 +43,7 @@ transaction = ["hashmap"]
 chrono = { version = "0.4", features = ["clock", "serde"] }
 derive_more = { version = "2.1", features = ["display", "error"] }
 itertools = "0.15"
-parking_lot = { version = "0.12", features = [
+parking_lot = { version = "0.13", features = [
     "hardware-lock-elision",
 ], optional = true }
 serde_core = { version = "1.0.229" }
